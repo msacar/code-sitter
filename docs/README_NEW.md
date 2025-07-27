@@ -24,7 +24,7 @@ Java → Basic → Imports, Annotations
 Go → Default → Basic chunking only
 ```
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed information.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed information.
 
 ## 🚀 Quick Start
 
@@ -58,8 +58,6 @@ code-sitter index --watch
 # View statistics
 code-sitter stats
 ```
-
-See [docs/QUICKSTART.md](docs/QUICKSTART.md) for more detailed getting started instructions.
 
 ## 🔧 Language Support
 
@@ -105,7 +103,7 @@ class MyLanguageAnalyzer(LanguageAnalyzer):
         pass
 ```
 
-The analyzer will be auto-discovered on startup! See [docs/ADDING_LANGUAGES.md](docs/ADDING_LANGUAGES.md) for a complete guide.
+The analyzer will be auto-discovered on startup!
 
 ## 📊 Search Capabilities
 
@@ -179,15 +177,7 @@ deps = engine.analyze_dependencies("src/app.ts")
 engine.close()
 ```
 
-## 📚 Documentation
-
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and architecture
-- [docs/ADDING_LANGUAGES.md](docs/ADDING_LANGUAGES.md) - Guide for adding new language support
-- [docs/QUICKSTART.md](docs/QUICKSTART.md) - Detailed getting started guide
-- [docs/PROJECT_DESCRIPTION.md](docs/PROJECT_DESCRIPTION.md) - Original project planning
-- [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md) - Advanced features and call-site extraction
-
-## 📁 Project Structure
+## 📚 Project Structure
 
 ```
 code-sitter/
@@ -195,7 +185,6 @@ code-sitter/
 │   ├── base.py            # Base classes and interfaces
 │   ├── registry.py        # Analyzer registration
 │   └── languages/         # Language implementations
-├── docs/                  # Documentation
 ├── flexible_flow.py       # Main indexing flow
 ├── query.py              # Search engine
 ├── cli.py                # CLI interface
