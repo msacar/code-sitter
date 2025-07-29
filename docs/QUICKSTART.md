@@ -2,20 +2,26 @@
 
 ## 🚀 Getting Started
 
+### Why uv?
+
+Code-Sitter uses [`uv`](https://github.com/astral-sh/uv) for dependency management because it's:
+- **Fast**: 10-100x faster than pip for dependency installation
+- **Reliable**: Consistent lockfile format ensures reproducible builds
+- **Modern**: Built-in support for PEP 517/518 and pyproject.toml
+- **Simple**: Single tool for virtual environments and package management
+
 ### 1. Setup Python Environment
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Activate it
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
-
-# Install tree-sitter language packages (if not in requirements.txt)
-pip install tree-sitter-typescript tree-sitter-javascript numpy
+# Install all dependencies from pyproject.toml
+uv pip install -e .
 ```
 
 ### 2. Configure Environment (Optional)
@@ -26,13 +32,6 @@ cp .env.example .env
 
 # Edit .env if you want to use PostgreSQL
 # Otherwise, it will use JSON file storage by default
-```
-
-### 3. Install CLI Tool
-
-```bash
-# Install code-sitter command
-pip install -e .
 ```
 
 ## 📖 Usage Examples
@@ -157,10 +156,37 @@ When using JSON storage (default), the following files are created:
 
 ## 🐛 Troubleshooting
 
-- **Import errors**: Make sure all dependencies are installed
+### Common Issues
+- **Import errors**: Make sure all dependencies are installed with `uv pip install -e .`
 - **No results**: Check if indexing completed successfully
 - **Performance issues**: Consider using PostgreSQL instead of JSON
 - **Memory errors**: Reduce chunk size in the flow configuration
+
+### Useful uv Commands
+```bash
+# Add a new dependency
+uv pip install package-name
+uv add package-name  # Adds to pyproject.toml
+
+# Update dependencies
+uv pip install -e . --upgrade
+
+# Show installed packages
+uv pip list
+
+# Create lock file for reproducible builds
+uv pip compile pyproject.toml -o requirements.lock
+```
+
+### Migration Note
+If you're upgrading from an older version that used `tree-sitter-languages`, note that we've migrated to `tree-sitter-language-pack` which:
+- Supports Python 3.13 and newer versions
+- Includes 165+ languages in a single package
+- Is actively maintained with regular updates
+- No need to install separate language packages
+
+### Build System Note
+This project uses Hatchling as its build backend with a flat module structure (Python files at the root level). The `pyproject.toml` is configured to include all root-level `.py` files and the `analyzers` package. If you encounter build issues, ensure the `[tool.hatch.build.targets.wheel]` section is present in `pyproject.toml`.
 
 ## 📚 Resources
 

@@ -31,14 +31,15 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed information.
 ### Installation
 
 ```bash
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
-pip install -r requirements.txt
-pip install tree-sitter-typescript tree-sitter-javascript tree-sitter-python
-pip install -e .
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate
+
+# Install all dependencies from pyproject.toml
+uv pip install -e .
 ```
 
 ### Basic Usage

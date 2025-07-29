@@ -1,4 +1,4 @@
-# OUR PURPOSE 
+# OUR PURPOSE
 ## Summary
 
 Over the past few turns, we’ve defined your goal—to build a real‑time, syntax‑aware index of one or more codebases—and chosen the exact tools and language to make it happen. You’ll use **Tree‑sitter** for parsing TypeScript (and any other languages) into ASTs and **CocoIndex’s Python SDK** to orchestrate file ingestion, syntactic chunking, embedding or indexing, and retrieval. Below is a step‑by‑step recap of our conversation, followed by a clear plan for how to proceed.
@@ -11,7 +11,7 @@ Over the past few turns, we’ve defined your goal—to build a real‑time, syn
    You wanted to build a TypeScript parser project using Tree‑sitter, scanning an entire codebase into memory and querying it by symbols, methods, etc.
 
 2. **Tree‑sitter setup**
-   I explained how to install and configure Tree‑sitter (and the `tree-sitter-typescript` grammar) in Node.js or Rust, recursively parse `.ts/.tsx` files, and run S‑expression queries to capture function and method definitions.
+   I explained how to install and configure Tree‑sitter (and the TypeScript grammar via `tree-sitter-language-pack`) in Node.js or Rust, recursively parse `.ts/.tsx` files, and run S‑expression queries to capture function and method definitions.
 
 3. **Global symbol index**
    We discussed building an in‑memory symbol table by running Tree‑sitter queries on each parsed tree and mapping symbol names to source locations, with examples inspired by CodeQA and CocoIndex.

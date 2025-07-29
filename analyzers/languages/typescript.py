@@ -4,8 +4,7 @@ from typing import Iterator, List, Dict, Any
 import logging
 
 from tree_sitter import Language, Parser, Query
-import tree_sitter_typescript as ts_typescript
-import tree_sitter_javascript as ts_javascript
+from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
 
@@ -24,11 +23,11 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
     """
 
     def __init__(self):
-        # Initialize Tree-sitter languages
-        self._ts_language = Language(ts_typescript.language_typescript(), "typescript")
-        self._tsx_language = Language(ts_typescript.language_tsx(), "tsx")
-        self._js_language = Language(ts_javascript.language_javascript(), "javascript")
-        self._jsx_language = Language(ts_javascript.language_jsx(), "jsx")
+        # Initialize Tree-sitter languages using language pack
+        self._ts_language = get_language("typescript")
+        self._tsx_language = get_language("tsx")
+        self._js_language = get_language("javascript")
+        self._jsx_language = get_language("jsx")
 
         self._language_map = {
             ".ts": self._ts_language,

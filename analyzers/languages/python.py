@@ -4,7 +4,7 @@ from typing import Iterator, List, Dict, Any
 import logging
 
 from tree_sitter import Language, Parser, Query
-import tree_sitter_python as ts_python
+from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
 
@@ -23,8 +23,8 @@ class PythonAnalyzer(LanguageAnalyzer):
     """
 
     def __init__(self):
-        # Initialize Tree-sitter for Python
-        self._language = Language(ts_python.language(), "python")
+        # Initialize Tree-sitter for Python using language pack
+        self._language = get_language("python")
 
         # Define queries
         self._call_query = """

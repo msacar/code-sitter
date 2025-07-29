@@ -41,7 +41,7 @@ Out of the box, CocoIndex’s built‑in TypeScript parser will split your `.ts`
        (identifier)           @arg          ; first argument
      )
    )
-   ``` :contentReference[oaicite:3]{index=3}  
+   ``` :contentReference[oaicite:3]{index=3}
 
    ````
 
@@ -105,18 +105,18 @@ To capture call-site relationships in your TypeScript code, you can write a cust
 
 ## 2. Load the TypeScript Grammar and Parser
 
-1. In your Python script, import the Tree‑sitter API and the TypeScript grammar:
+1. In your Python script, import the Tree‑sitter API and the language pack:
 
    ```python
    from tree_sitter import Language, Parser
-   import tree_sitter_typescript as ts
+   from tree_sitter_language_pack import get_language
    ```
 
    ([GitHub][5], [PyPI][6])
 2. Load the grammar and initialize the parser:
 
    ```python
-   TS_LANGUAGE = Language(ts.language(), "typescript")
+   TS_LANGUAGE = get_language("typescript")
    parser = Parser()
    parser.set_language(TS_LANGUAGE)
    ```

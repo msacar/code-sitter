@@ -13,19 +13,18 @@ from cocoindex import FlowBuilder, sources, functions
 import cocoindex.op as op
 from sentence_transformers import SentenceTransformer
 from tree_sitter import Language, Parser, Query
-import tree_sitter_typescript as ts_typescript
-import tree_sitter_javascript as ts_javascript
+from tree_sitter_language_pack import get_language
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize Tree-sitter languages
-TS_LANGUAGE = Language(ts_typescript.language_typescript(), "typescript")
-TSX_LANGUAGE = Language(ts_typescript.language_tsx(), "tsx")
-JS_LANGUAGE = Language(ts_javascript.language_javascript(), "javascript")
-JSX_LANGUAGE = Language(ts_javascript.language_jsx(), "jsx")
+# Initialize Tree-sitter languages using language pack
+TS_LANGUAGE = get_language("typescript")
+TSX_LANGUAGE = get_language("tsx")
+JS_LANGUAGE = get_language("javascript")
+JSX_LANGUAGE = get_language("jsx")
 
 # Language mapping
 LANGUAGE_MAP = {
