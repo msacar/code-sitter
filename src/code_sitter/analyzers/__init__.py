@@ -7,7 +7,14 @@ from .base import (
     CallRelationship,
     ImportRelationship
 )
-from .registry import AnalyzerRegistry, get_analyzer
+from .registry import (
+    AnalyzerRegistry,
+    get_analyzer,
+    get_registry,
+    register_analyzer,
+    auto_discover_analyzers,
+    register_defaults
+)
 
 __all__ = [
     'LanguageAnalyzer',
@@ -16,5 +23,9 @@ __all__ = [
     'CallRelationship',
     'ImportRelationship',
     'AnalyzerRegistry',
-    'get_analyzer'
+    'get_analyzer',
+    'get_registry',
+    'register_analyzer',
+    'auto_discover_analyzers',
+    'register_defaults'
 ]

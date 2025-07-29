@@ -85,16 +85,16 @@ code-sitter analyze src/components/Button.tsx
 
 ```bash
 # Run the enhanced flow directly
-python enhanced_flow.py
+python -m code_sitter.enhanced_flow
 
 # Or use with CocoIndex CLI
-cocoindex update enhanced_flow.py
+cocoindex update src/code_sitter/enhanced_flow.py
 ```
 
 ### Programmatic Usage
 
 ```python
-from query import CodeSearchEngine
+from code_sitter.query import CodeSearchEngine
 
 # Initialize search engine
 engine = CodeSearchEngine()

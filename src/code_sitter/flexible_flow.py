@@ -13,7 +13,7 @@ from cocoindex import FlowBuilder, sources, functions
 from sentence_transformers import SentenceTransformer
 import logging
 
-from analyzers import (
+from .analyzers import (
     get_registry,
     auto_discover_analyzers,
     register_defaults,

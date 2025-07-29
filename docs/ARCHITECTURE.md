@@ -10,16 +10,20 @@ Code-Sitter uses a **pluggable analyzer architecture** that allows different pro
 
 ```
 code-sitter/
-├── analyzers/              # Language analyzer system
-│   ├── base.py            # Base classes and interfaces
-│   ├── registry.py        # Analyzer registration and discovery
-│   └── languages/         # Language-specific implementations
-│       ├── typescript.py  # TypeScript/JavaScript analyzer
-│       ├── python.py      # Python analyzer
-│       └── java.py        # Java analyzer (example)
-├── flexible_flow.py       # Main flow using analyzer system
-├── query.py              # Search engine
-└── cli.py                # Command-line interface
+├── src/code_sitter/          # Main package (src layout)
+│   ├── analyzers/            # Language analyzer system
+│   │   ├── base.py          # Base classes and interfaces
+│   │   ├── registry.py      # Analyzer registration and discovery
+│   │   └── languages/       # Language-specific implementations
+│   │       ├── typescript.py # TypeScript/JavaScript analyzer
+│   │       ├── python.py    # Python analyzer
+│   │       └── java.py      # Java analyzer (example)
+│   ├── flexible_flow.py     # Main flow using analyzer system
+│   ├── query.py            # Search engine
+│   └── cli.py              # Command-line interface
+├── scripts/                # Example scripts
+├── tests/                  # Test suite
+└── docs/                   # Documentation
 ```
 
 ### 2. Language Analyzer Interface
@@ -77,10 +81,10 @@ DefaultAnalyzer([".rs"], "rust"),
 
 #### Option 2: Create Custom Analyzer
 
-Create a new file in `analyzers/languages/`:
+Create a new file in `src/code_sitter/analyzers/languages/`:
 
 ```python
-# analyzers/languages/mylang.py
+# src/code_sitter/analyzers/languages/mylang.py
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
 
 class MyLangAnalyzer(LanguageAnalyzer):

@@ -182,9 +182,10 @@ engine.close()
 
 ## 📚 Documentation
 
+- [docs/QUICKSTART.md](docs/QUICKSTART.md) - Detailed getting started guide
+- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) - Development setup and project structure
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System design and architecture
 - [docs/ADDING_LANGUAGES.md](docs/ADDING_LANGUAGES.md) - Guide for adding new language support
-- [docs/QUICKSTART.md](docs/QUICKSTART.md) - Detailed getting started guide
 - [docs/PROJECT_DESCRIPTION.md](docs/PROJECT_DESCRIPTION.md) - Original project planning
 - [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md) - Advanced features and call-site extraction
 
@@ -192,15 +193,39 @@ engine.close()
 
 ```
 code-sitter/
-├── analyzers/              # Language analyzer system
-│   ├── base.py            # Base classes and interfaces
-│   ├── registry.py        # Analyzer registration
-│   └── languages/         # Language implementations
-├── docs/                  # Documentation
-├── flexible_flow.py       # Main indexing flow
-├── query.py              # Search engine
-├── cli.py                # CLI interface
-└── example.py            # Usage examples
+├── src/code_sitter/          # Main package (src layout)
+│   ├── __init__.py
+│   ├── __main__.py           # Module entry point
+│   ├── cli/                  # CLI interface
+│   │   ├── __init__.py       # Main CLI group
+│   │   ├── commands/         # Individual commands
+│   │   │   ├── index.py
+│   │   │   ├── search.py
+│   │   │   ├── stats.py
+│   │   │   └── analyze.py
+│   │   ├── config.py         # CLI configuration
+│   │   └── utils.py          # Display helpers
+│   ├── query.py              # Search engine
+│   ├── coco_flow.py          # Basic indexing flow
+│   ├── enhanced_flow.py      # Enhanced flow with call extraction
+│   ├── flexible_flow.py      # Multi-language flow
+│   └── analyzers/            # Language analyzer system
+│       ├── __init__.py
+│       ├── base.py           # Base classes and interfaces
+│       ├── registry.py       # Analyzer registration
+│       └── languages/        # Language implementations
+│           ├── __init__.py
+│           ├── python.py
+│           ├── typescript.py
+│           └── java.py
+├── scripts/                  # Example scripts
+│   └── example.py           # Usage examples
+├── tests/                   # Test suite
+│   ├── test_analyzers.py
+│   └── test_cli.py
+├── docs/                    # Documentation
+├── pyproject.toml          # Project configuration
+└── README.md               # This file
 ```
 
 ## 🤝 Contributing

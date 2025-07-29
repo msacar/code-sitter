@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-from query import CodeSearchEngine
+from code_sitter.query import CodeSearchEngine
 from rich import print as rprint
 from rich.console import Console
 from rich.syntax import Syntax
