@@ -87,7 +87,7 @@ These languages get basic syntax-aware chunking without custom analysis:
 
 ### Adding a New Language
 
-Create a file in `analyzers/languages/`:
+Create a file in `src/code_sitter/analyzers/languages/`:
 
 ```python
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
@@ -160,7 +160,7 @@ code-sitter index
 ## 🛠️ Programmatic Usage
 
 ```python
-from query import CodeSearchEngine
+from code_sitter.query import CodeSearchEngine
 
 # Initialize search engine
 engine = CodeSearchEngine()
@@ -206,9 +206,12 @@ code-sitter/
 │   │   ├── config.py         # CLI configuration
 │   │   └── utils.py          # Display helpers
 │   ├── query.py              # Search engine
-│   ├── coco_flow.py          # Basic indexing flow
-│   ├── enhanced_flow.py      # Enhanced flow with call extraction
-│   ├── flexible_flow.py      # Multi-language flow
+│   ├── flows/                # CocoIndex flow definitions
+│   │   ├── __init__.py
+│   │   ├── basic.py          # Basic minimal flow
+│   │   ├── simple.py         # Simple multi-language flow (default)
+│   │   ├── enhanced.py       # Enhanced flow with call extraction
+│   │   └── flexible.py       # Advanced flow with pluggable analyzers
 │   └── analyzers/            # Language analyzer system
 │       ├── __init__.py
 │       ├── base.py           # Base classes and interfaces
@@ -232,7 +235,7 @@ code-sitter/
 
 1. Fork the repository
 2. Create a feature branch
-3. Add your language analyzer in `analyzers/languages/`
+3. Add your language analyzer in `src/code_sitter/analyzers/languages/`
 4. Add tests
 5. Submit a pull request
 

@@ -85,7 +85,7 @@ Over the past few turns, we’ve defined your goal—to build a real‑time, syn
    ```
 
 2. **Create a flow definition**
-   In `src/code_sitter/coco_flow.py`, use the SDK to:
+   In `src/code_sitter/flows/basic.py`, use the SDK to:
 
    ```python
    from cocoindex import FlowBuilder, sources, functions
@@ -138,8 +138,10 @@ Over the past few turns, we’ve defined your goal—to build a real‑time, syn
 4. **Run and monitor your flow**
 
    ```bash
-   cocoindex update src/code_sitter/coco_flow.py
-   cocoindex server src/code_sitter/coco_flow.py  # optional: launches a REST API for interactive queries
+   cocoindex update src/code_sitter/flows/basic.py
+   # Or for better multi-language support:
+   cocoindex update src/code_sitter/flows/simple.py
+   cocoindex server src/code_sitter/flows/simple.py  # optional: launches a REST API for interactive queries
    ```
 
 5. **Interactive querying**

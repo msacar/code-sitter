@@ -36,14 +36,58 @@ cp .env.example .env
 
 ## 📖 Usage Examples
 
+### Understanding the Different Flows
+
+Code-Sitter provides four different indexing flows, each with different capabilities:
+
+1. **`simple` (default)** - Reliable multi-language indexing
+   - ✅ Supports 20+ languages out of the box
+   - ✅ Syntax-aware chunking for all languages
+   - ✅ No complex dependencies or imports
+   - ✅ Works reliably with CocoIndex
+   - ❌ No advanced analysis (call extraction, imports)
+
+2. **`basic`** - Minimal single-file indexing
+   - ✅ Very simple and fast
+   - ✅ Good for quick tests
+   - ❌ Limited language support
+   - ❌ No advanced features
+
+3. **`enhanced`** - JavaScript/TypeScript focused with call extraction
+   - ✅ Extracts function calls and relationships
+   - ✅ Advanced AST analysis for JS/TS
+   - ✅ Builds call graphs
+   - ❌ Only supports JavaScript/TypeScript family
+
+4. **`flexible`** - Advanced pluggable analyzer system
+   - ✅ Language-specific analyzers
+   - ✅ Extensible architecture
+   - ✅ Most advanced analysis capabilities
+   - ⚠️  May have import issues in some environments
+   - ⚠️  More complex setup
+
+For most users, the `simple` flow (default) provides the best balance of features and reliability.
+
 ### Basic Indexing
 
 ```bash
-# Index current directory
+# Index current directory (uses simple multi-language flow by default)
 code-sitter index
 
 # Index a specific TypeScript project
 code-sitter index --path /path/to/typescript/project
+
+# Use basic flow (minimal, single file output)
+code-sitter index --flow basic
+
+# Use simple flow (multi-language support, reliable - default)
+code-sitter index --flow simple
+
+# Use enhanced flow (with call-site extraction for JS/TS)
+code-sitter index --flow enhanced
+
+# Use flexible flow (with pluggable language analyzers - advanced)
+code-sitter index --flow flexible
 
 # Watch for changes (real-time indexing)
 code-sitter index --watch
@@ -85,10 +129,13 @@ code-sitter analyze src/components/Button.tsx
 
 ```bash
 # Run the enhanced flow directly
-python -m code_sitter.enhanced_flow
+python -c "from code_sitter.flows.enhanced import flow; flow.update()"
 
 # Or use with CocoIndex CLI
-cocoindex update src/code_sitter/enhanced_flow.py
+cocoindex update src/code_sitter/flows/enhanced.py
+
+# For the flexible flow with language analyzers
+cocoindex update src/code_sitter/flows/flexible.py
 ```
 
 ### Programmatic Usage
@@ -152,12 +199,13 @@ When using JSON storage (default), the following files are created:
 2. **Experiment with searches**: Try different search types
 3. **Integrate with your workflow**: Use the API in your tools
 4. **Enable PostgreSQL**: For better performance with large codebases
-5. **Customize the flow**: Modify `coco_flow.py` for your needs
+5. **Customize the flow**: Modify `src/code_sitter/coco_flow.py` for your needs
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 - **Import errors**: Make sure all dependencies are installed with `uv pip install -e .`
+- **"No known parent package" error**: Use `--flow simple` instead of `--flow flexible`
 - **No results**: Check if indexing completed successfully
 - **Performance issues**: Consider using PostgreSQL instead of JSON
 - **Memory errors**: Reduce chunk size in the flow configuration

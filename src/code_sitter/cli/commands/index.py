@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
 
-from ..config import BASIC_FLOW_PATH
+from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, SIMPLE_FLOW_PATH
 
 console = Console()
 
@@ -19,18 +19,32 @@ console = Console()
 @click.option('--path', '-p', default='.', help='Path to codebase to index')
 @click.option('--watch', '-w', is_flag=True, help='Watch for file changes')
 @click.option('--postgres', is_flag=True, help='Use PostgreSQL for storage')
-def index(path: str, watch: bool, postgres: bool):
-    """Index a TypeScript codebase."""
+@click.option('--flow', '-f',
+              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible']),
+              default='simple',
+              help='Which flow to use for indexing')
+def index(path: str, watch: bool, postgres: bool, flow: str):
+    """Index a codebase with pluggable language analyzers."""
     path = Path(path).resolve()
 
     if not path.exists():
         console.print(f"[red]Error: Path {path} does not exist[/red]")
         sys.exit(1)
 
+    # Select the appropriate flow
+    flow_map = {
+        'basic': BASIC_FLOW_PATH,
+        'simple': SIMPLE_FLOW_PATH,
+        'enhanced': ENHANCED_FLOW_PATH,
+        'flexible': FLEXIBLE_FLOW_PATH
+    }
+    flow_path = flow_map[flow]
+
     console.print(Panel(
         f"[bold blue]Indexing codebase at:[/bold blue] {path}\n"
         f"[bold]Storage:[/bold] {'PostgreSQL' if postgres else 'JSON file'}\n"
-        f"[bold]Watch mode:[/bold] {'Enabled' if watch else 'Disabled'}",
+        f"[bold]Watch mode:[/bold] {'Enabled' if watch else 'Disabled'}\n"
+        f"[bold]Flow:[/bold] {flow} ({flow_path.name})",
         title="Code-Sitter Indexer"
     ))
 
@@ -54,12 +68,12 @@ def index(path: str, watch: bool, postgres: bool):
             # Run CocoIndex
             if watch:
                 task = progress.add_task("Starting file watcher...", total=None)
-                cmd = ["cocoindex", "server", str(BASIC_FLOW_PATH)]
+                cmd = ["cocoindex", "server", str(flow_path)]
                 console.print(f"[green]Running: {' '.join(cmd)}[/green]")
                 subprocess.run(cmd)
             else:
                 task = progress.add_task("Indexing files...", total=None)
-                cmd = ["cocoindex", "update", str(BASIC_FLOW_PATH)]
+                cmd = ["cocoindex", "update", str(flow_path)]
                 result = subprocess.run(cmd, capture_output=True, text=True)
 
                 if result.returncode == 0:

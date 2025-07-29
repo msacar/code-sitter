@@ -95,9 +95,10 @@ See [docs/ADDING_LANGUAGES.md](ADDING_LANGUAGES.md) for details.
 
 ### Adding New Commands
 
-1. Add new command functions in `src/code_sitter/cli.py`
+1. Add new command functions in `src/code_sitter/cli/commands/`
 2. Use Click decorators for command definition
-3. Update help text and documentation
+3. Import and register in `cli/__init__.py`
+4. Update help text and documentation
 
 ## Project Layout Benefits
 
@@ -167,7 +168,7 @@ def mycommand(flag):
     """Description of my command."""
     # Implementation
 
-# In cli/__init__.py
+# In src/code_sitter/cli/__init__.py
 from .commands import mycommand
 cli.add_command(mycommand.mycommand)
 ```

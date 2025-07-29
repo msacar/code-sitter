@@ -12,18 +12,34 @@ Code-Sitter uses a **pluggable analyzer architecture** that allows different pro
 code-sitter/
 ├── src/code_sitter/          # Main package (src layout)
 │   ├── analyzers/            # Language analyzer system
+│   │   ├── __init__.py      # Package initialization
 │   │   ├── base.py          # Base classes and interfaces
 │   │   ├── registry.py      # Analyzer registration and discovery
 │   │   └── languages/       # Language-specific implementations
+│   │       ├── __init__.py
 │   │       ├── typescript.py # TypeScript/JavaScript analyzer
 │   │       ├── python.py    # Python analyzer
 │   │       └── java.py      # Java analyzer (example)
-│   ├── flexible_flow.py     # Main flow using analyzer system
-│   ├── query.py            # Search engine
-│   └── cli.py              # Command-line interface
-├── scripts/                # Example scripts
-├── tests/                  # Test suite
-└── docs/                   # Documentation
+│   ├── cli/                 # Command-line interface
+│   │   ├── __init__.py      # Main CLI group and entry point
+│   │   ├── commands/        # Individual command modules
+│   │   │   ├── __init__.py
+│   │   │   ├── index.py     # Indexing commands
+│   │   │   ├── search.py    # Search functionality
+│   │   │   ├── stats.py     # Statistics display
+│   │   │   └── analyze.py   # File analysis
+│   │   ├── config.py        # CLI configuration and constants
+│   │   └── utils.py         # Display utilities and formatters
+│   ├── flows/               # CocoIndex flow definitions
+│   │   ├── __init__.py      # Package initialization
+│   │   ├── basic.py         # Basic minimal flow
+│   │   ├── simple.py        # Simple multi-language flow (default)
+│   │   ├── enhanced.py      # Enhanced flow with call-site extraction
+│   │   └── flexible.py      # Advanced flow with pluggable analyzers
+│   └── query.py             # Search engine
+├── scripts/                 # Example scripts
+├── tests/                   # Test suite
+└── docs/                    # Documentation
 ```
 
 ### 2. Language Analyzer Interface

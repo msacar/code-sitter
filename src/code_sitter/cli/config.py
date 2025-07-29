@@ -22,10 +22,11 @@ DEFAULT_CHUNK_SIZE = 1000
 DEFAULT_CHUNK_OVERLAP = 200
 
 # Flow file locations
-FLOW_DIR = Path(__file__).parent.parent
-BASIC_FLOW_PATH = FLOW_DIR / "coco_flow.py"
-ENHANCED_FLOW_PATH = FLOW_DIR / "enhanced_flow.py"
-FLEXIBLE_FLOW_PATH = FLOW_DIR / "flexible_flow.py"
+FLOW_DIR = Path(__file__).parent.parent / "flows"
+BASIC_FLOW_PATH = FLOW_DIR / "basic.py"
+ENHANCED_FLOW_PATH = FLOW_DIR / "enhanced.py"
+FLEXIBLE_FLOW_PATH = FLOW_DIR / "flexible.py"
+SIMPLE_FLOW_PATH = FLOW_DIR / "simple.py"
 
 # Display settings
 MAX_CODE_PREVIEW_LENGTH = 200

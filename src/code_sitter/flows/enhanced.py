@@ -6,8 +6,15 @@ using Tree-sitter AST queries for detailed code analysis.
 """
 
 import os
+import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Iterator
+
+# Add the src directory to Python path for imports
+current_file = Path(__file__).resolve()
+src_dir = current_file.parent.parent.parent  # flows -> code_sitter -> src
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
 
 from cocoindex import FlowBuilder, sources, functions
 import cocoindex.op as op
