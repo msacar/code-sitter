@@ -10,7 +10,7 @@ Code-Sitter uses a pluggable architecture where each language can have its own a
 
 ### 1. Create the Analyzer File
 
-Create `src/code_sitter/analyzers/languages/ruby.py`:
+Create `codesitter/analyzers/languages/ruby.py`:
 
 ```python
 from typing import Iterator, List, Dict, Any
@@ -64,7 +64,7 @@ pip install tree-sitter-go
 ### 2. Create Advanced Analyzer
 
 ```python
-# src/code_sitter/analyzers/languages/go.py
+# codesitter/analyzers/languages/go.py
 from tree_sitter import Language, Parser, Query
 import tree_sitter_go as ts_go
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
@@ -150,8 +150,8 @@ def extract_custom_metadata(self, chunk: CodeChunk) -> Dict[str, Any]:
 
 ```python
 # test_my_analyzer.py
-from code_sitter.analyzers.languages.mylang import MyLangAnalyzer
-from code_sitter.analyzers.base import CodeChunk
+from codesitter.analyzers.languages.mylang import MyLangAnalyzer
+from codesitter.analyzers.base import CodeChunk
 
 def test_import_extraction():
     analyzer = MyLangAnalyzer()
@@ -224,7 +224,7 @@ echo 'print("hello")' | code-sitter index --debug
 ## Contributing Your Analyzer
 
 1. Fork the repository
-2. Create your analyzer in `src/code_sitter/analyzers/languages/`
+2. Create your analyzer in `codesitter/analyzers/languages/`
 3. Add tests
 4. Update the language support table in README
 5. Submit a pull request
