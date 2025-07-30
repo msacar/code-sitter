@@ -2,7 +2,7 @@ import os
 import sys
 import json
 from pathlib import Path
-from typing import List, Any
+from typing import List, Any, Literal
 
 from cocoindex import (
     FlowBuilder,
@@ -13,6 +13,7 @@ from cocoindex import (
     DataScope,
     VectorIndexDef,
     VectorSimilarityMetric,
+    Vector,  # Import Vector type
 )
 from cocoindex.targets import Postgres
 from cocoindex.op import TargetSpec, target_connector
@@ -108,9 +109,10 @@ def get_language(filename: str) -> str:
     }.get(ext, "text")
 
 @op.function()
-def embed(text: str) -> List[float]:
+def embed(text: str) -> Vector[float, Literal[384]]:
     if not text:
-        return []
+        # Return zero vector with correct dimension
+        return [0.0] * 384
     return embedder.encode(text.strip()).tolist()
 
 @flow_def(name="FlexibleCodeIndex")

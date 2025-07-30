@@ -11,8 +11,8 @@ DEFAULT_IMPORT_RELATIONSHIPS_PATH = "import_relationships.json"
 
 # Environment variables
 USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() == "true"
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:secret@localhost:5432/cocoindex")
-COCOINDEX_DATABASE_URL = os.getenv("COCOINDEX_DATABASE_URL", "postgresql://postgres:secret@localhost:5432/cocoindex")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://cocoindex:cocoindex@localhost:5432/cocoindex")
+COCOINDEX_DATABASE_URL = os.getenv("COCOINDEX_DATABASE_URL", "postgresql://cocoindex:cocoindex@localhost:5432/cocoindex")
 
 # Search defaults
 DEFAULT_SEARCH_LIMIT = 5
@@ -27,6 +27,7 @@ FLOW_DIR = Path(__file__).parent.parent / "flows"
 BASIC_FLOW_PATH = FLOW_DIR / "basic.py"
 ENHANCED_FLOW_PATH = FLOW_DIR / "enhanced.py"
 FLEXIBLE_FLOW_PATH = FLOW_DIR / "flexible.py"
+FLEXIBLE_NO_VECTOR_FLOW_PATH = FLOW_DIR / "flexible_no_vector.py"
 SIMPLE_FLOW_PATH = FLOW_DIR / "simple.py"
 MINIMAL_FLEXIBLE_FLOW_PATH = FLOW_DIR / "minimal_flexible.py"
 MINIMAL_FLOW_PATH = FLOW_DIR / "minimal.py"
