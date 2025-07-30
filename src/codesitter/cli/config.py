@@ -11,7 +11,8 @@ DEFAULT_IMPORT_RELATIONSHIPS_PATH = "import_relationships.json"
 
 # Environment variables
 USE_POSTGRES = os.getenv("USE_POSTGRES", "false").lower() == "true"
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost:5432/code_index")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:secret@localhost:5432/cocoindex")
+COCOINDEX_DATABASE_URL = os.getenv("COCOINDEX_DATABASE_URL", "postgresql://postgres:secret@localhost:5432/cocoindex")
 
 # Search defaults
 DEFAULT_SEARCH_LIMIT = 5

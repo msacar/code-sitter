@@ -74,7 +74,7 @@ def index(path: str, watch: bool, postgres: bool, flow: str):
                 subprocess.run(cmd)
             else:
                 task = progress.add_task("Indexing files...", total=None)
-                cmd = ["cocoindex", "update", str(flow_path)]
+                cmd = ["cocoindex", "update", "--setup", str(flow_path)]
                 result = subprocess.run(cmd, capture_output=True, text=True)
 
                 if result.returncode == 0:
