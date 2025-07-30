@@ -129,19 +129,19 @@ code-sitter analyze src/components/Button.tsx
 
 ```bash
 # Run the enhanced flow directly
-python -c "from codesitter.flows.enhanced import flow; flow.update()"
+python -c "from code_sitter.flows.enhanced import flow; flow.update()"
 
 # Or use with CocoIndex CLI
-cocoindex update codesitter/flows/enhanced.py
+cocoindex update src/code_sitter/flows/enhanced.py
 
 # For the flexible flow with language analyzers
-cocoindex update codesitter/flows/flexible.py
+cocoindex update src/code_sitter/flows/flexible.py
 ```
 
 ### Programmatic Usage
 
 ```python
-from codesitter.query import CodeSearchEngine
+from code_sitter.query import CodeSearchEngine
 
 # Initialize search engine
 engine = CodeSearchEngine()
@@ -199,7 +199,7 @@ When using JSON storage (default), the following files are created:
 2. **Experiment with searches**: Try different search types
 3. **Integrate with your workflow**: Use the API in your tools
 4. **Enable PostgreSQL**: For better performance with large codebases
-5. **Customize the flow**: Modify `codesitter/coco_flow.py` for your needs
+5. **Customize the flow**: Modify `src/code_sitter/coco_flow.py` for your needs
 
 ## 🐛 Troubleshooting
 

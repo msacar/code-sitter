@@ -94,7 +94,7 @@ class AnalyzerRegistry:
 
             try:
                 # Import the module
-                module = importlib.import_module(f".languages.{module_name}", package="codesitter.analyzers")
+                module = importlib.import_module(f".languages.{module_name}", package="code_sitter.analyzers")
 
                 # Look for analyzer classes
                 for attr_name in dir(module):

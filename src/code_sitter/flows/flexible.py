@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional
 
 # Add the src directory to Python path for imports
 current_file = Path(__file__).resolve()
-src_dir = current_file.parent.parent.parent  # flows -> codesitter -> src
+src_dir = current_file.parent.parent.parent  # flows -> code_sitter -> src
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
@@ -20,7 +20,7 @@ from cocoindex import FlowBuilder, sources, functions
 from sentence_transformers import SentenceTransformer
 import logging
 
-from codesitter.analyzers import (
+from code_sitter.analyzers import (
     get_registry,
     auto_discover_analyzers,
     register_defaults,

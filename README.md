@@ -87,7 +87,7 @@ These languages get basic syntax-aware chunking without custom analysis:
 
 ### Adding a New Language
 
-Create a file in `codesitter/analyzers/languages/`:
+Create a file in `src/code_sitter/analyzers/languages/`:
 
 ```python
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
@@ -160,7 +160,7 @@ code-sitter index
 ## 🛠️ Programmatic Usage
 
 ```python
-from codesitter.query import CodeSearchEngine
+from code_sitter.query import CodeSearchEngine
 
 # Initialize search engine
 engine = CodeSearchEngine()
@@ -193,7 +193,7 @@ engine.close()
 
 ```
 code-sitter/
-├── codesitter/          # Main package (src layout)
+├── src/code_sitter/          # Main package (src layout)
 │   ├── __init__.py
 │   ├── __main__.py           # Module entry point
 │   ├── cli/                  # CLI interface
@@ -235,7 +235,7 @@ code-sitter/
 
 1. Fork the repository
 2. Create a feature branch
-3. Add your language analyzer in `codesitter/analyzers/languages/`
+3. Add your language analyzer in `src/code_sitter/analyzers/languages/`
 4. Add tests
 5. Submit a pull request
 
