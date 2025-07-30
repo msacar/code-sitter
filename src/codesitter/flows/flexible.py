@@ -16,7 +16,7 @@ src_dir = current_file.parent.parent.parent  # flows -> codesitter -> src
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-from cocoindex import FlowBuilder, sources, functions
+from cocoindex import FlowBuilder, sources, functions, op, flow_def, DataScope, VectorIndex, VectorSimilarityMetric
 from sentence_transformers import SentenceTransformer
 import logging
 
@@ -42,40 +42,15 @@ registry = get_registry()
 supported_exts = registry.list_supported_extensions()
 logger.info(f"Registered language support for: {list(supported_exts.keys())}")
 
-# Initialize the flow
-flow = FlowBuilder("FlexibleCodeIndex")
+# -----------------------------------------------------------------------------
+# Helper functions for the flow
 
-# Configure source files - now supports many more languages!
-all_patterns = []
-for ext in supported_exts.keys():
-    all_patterns.append(f"**/*{ext}")
-
-files = flow.add_source(
-    sources.LocalFile(
-        path=".",
-        included_patterns=all_patterns,
-        excluded_patterns=[
-            "**/node_modules/**",
-            "**/dist/**",
-            "**/build/**",
-            "**/.next/**",
-            "**/coverage/**",
-            "**/*.min.js",
-            "**/.git/**",
-            "**/venv/**",
-            "**/__pycache__/**",
-            "**/.venv/**",
-            "**/target/**",  # Rust
-            "**/vendor/**",  # Go
-            "**/.bundle/**", # Ruby
-        ],
-    )
-)
-
+@op.function()
 def extract_extension(filename: str) -> str:
     """Extract file extension from filename."""
     return os.path.splitext(filename)[1].lower()
 
+@op.function()
 def get_language_for_cocoindex(filename: str) -> str:
     """Map filename to language for CocoIndex chunking."""
     analyzer = get_analyzer(filename)
@@ -99,20 +74,19 @@ def get_language_for_cocoindex(filename: str) -> str:
     }
     return fallback_map.get(ext, "text")
 
-# Add file metadata
-files["ext"] = files["filename"].transform(extract_extension)
-files["language"] = files["filename"].transform(get_language_for_cocoindex)
+# Initialize embedding model
+embedder = SentenceTransformer("all-MiniLM-L6-v2")
 
-# Configure syntax-aware chunking
-files["chunks"] = files["content"].transform(
-    functions.SplitRecursively(),
-    language=files["language"],
-    chunk_size=1000,
-    chunk_overlap=200,
-    respect_syntax=True,
-)
+@op.function()
+def generate_code_embedding(chunk_text: str) -> List[float]:
+    """Generate vector embedding for code chunk."""
+    if not chunk_text:
+        return []
+    cleaned_text = chunk_text.strip()
+    embedding = embedder.encode(cleaned_text)
+    return embedding.tolist()
 
-@flow.register_op
+@op.function()
 def analyze_chunk(row: Dict[str, Any]) -> Dict[str, Any]:
     """
     Analyze chunks using language-specific analyzers.
@@ -200,11 +174,7 @@ def analyze_chunk(row: Dict[str, Any]) -> Dict[str, Any]:
         "analyzer_language": analyzer.language_name if analyzer else None
     }
 
-# Apply analysis to all files
-files = files.transform(analyze_chunk)
-
-# Extract chunk metadata for embedding
-@flow.register_op
+@op.function()
 def extract_chunk_metadata(chunk: Dict[str, Any], filename: str) -> Dict[str, Any]:
     """Extract metadata from code chunks."""
     return {
@@ -218,225 +188,104 @@ def extract_chunk_metadata(chunk: Dict[str, Any], filename: str) -> Dict[str, An
         "custom_metadata": chunk.get("custom_metadata", {})
     }
 
-files["chunk_metadata"] = files.apply(
-    lambda row: [
-        extract_chunk_metadata(chunk, row["filename"])
-        for chunk in row.get("chunks", [])
-    ]
-)
+# -----------------------------------------------------------------------------
+# Define the flexible code indexing flow
+@flow_def(name="FlexibleCodeIndex")
+def flexible_code_index_flow(flow_builder: FlowBuilder, data_scope: DataScope):
+    """
+    Flexible code indexing flow with pluggable language analyzers.
+    """
+    # Configure source files - now supports many more languages!
+    all_patterns = []
+    for ext in supported_exts.keys():
+        all_patterns.append(f"**/*{ext}")
 
-# Flatten chunks for embedding processing
-chunks_flow = files.explode("chunk_metadata")
-chunks_flow["chunk_data"] = chunks_flow["chunk_metadata"]
+    data_scope["files"] = flow_builder.add_source(
+        sources.LocalFile(
+            path=".",
+            included_patterns=all_patterns,
+            excluded_patterns=[
+                "**/node_modules/**",
+                "**/dist/**",
+                "**/build/**",
+                "**/.next/**",
+                "**/coverage/**",
+                "**/*.min.js",
+                "**/.git/**",
+                "**/venv/**",
+                "**/__pycache__/**",
+                "**/.venv/**",
+                "**/target/**",  # Rust
+                "**/vendor/**",  # Go
+                "**/.bundle/**", # Ruby
+            ],
+        )
+    )
 
-# Initialize embedding model
-embedder = SentenceTransformer("all-MiniLM-L6-v2")
+    # Add file metadata
+    data_scope["files"]["ext"] = data_scope["files"]["filename"].transform(extract_extension)
+    data_scope["files"]["language"] = data_scope["files"]["filename"].transform(get_language_for_cocoindex)
 
-@flow.register_op
-def generate_code_embedding(chunk_text: str) -> List[float]:
-    """Generate vector embedding for code chunk."""
-    if not chunk_text:
-        return []
-    cleaned_text = chunk_text.strip()
-    embedding = embedder.encode(cleaned_text)
-    return embedding.tolist()
+    # Configure syntax-aware chunking
+    data_scope["files"]["chunks"] = data_scope["files"]["content"].transform(
+        functions.SplitRecursively(),
+        language=data_scope["files"]["language"],
+        chunk_size=1000,
+        chunk_overlap=200,
+        respect_syntax=True,
+    )
 
-# Add embeddings
-chunks_flow["embedding"] = chunks_flow["chunk_data"].apply(
-    lambda chunk: generate_code_embedding(chunk.get("text", ""))
-)
+    # Apply analysis to all files
+    data_scope["files"] = data_scope["files"].transform(analyze_chunk)
 
-# Configure storage based on environment
-if os.getenv("USE_POSTGRES", "false").lower() == "true":
-    # PostgreSQL storage with separate tables
+    # Add collectors
+    code_embeddings = data_scope.add_collector()
 
-    # Store code chunks with embeddings
-    chunks_flow.add_sink(
-        functions.sinks.Postgres(
-            connection_string=os.getenv(
-                "DATABASE_URL",
-                "postgresql://localhost:5432/code_index"
+    # Process chunks for embedding
+    with data_scope["files"].row() as file:
+        # Process each chunk in the file
+        with file["chunks"].row() as chunk:
+            # Generate embedding for chunk text
+            chunk["embedding"] = chunk["text"].transform(generate_code_embedding)
+
+            # Collect chunk data with embedding
+            code_embeddings.collect(
+                filename=file["filename"],
+                location=chunk["location"],
+                chunk_text=chunk["text"],
+                embedding=chunk["embedding"],
+                language=file["language"]
+            )
+
+    # Configure storage based on environment
+    if os.getenv("USE_POSTGRES", "false").lower() == "true":
+        # PostgreSQL storage - export directly from collector
+        code_embeddings.export(
+            "code_chunks",
+            functions.storages.Postgres(
+                connection_string=os.getenv(
+                    "DATABASE_URL",
+                    "postgresql://localhost:5432/code_index"
+                ),
             ),
-            table_name="code_chunks",
-            columns={
-                "filename": "text",
-                "chunk_index": "integer",
-                "chunk_text": "text",
-                "start_line": "integer",
-                "end_line": "integer",
-                "node_type": "text",
-                "symbols": "text[]",
-                "embedding": "vector(384)",
-                "language": "text",
-                "custom_metadata": "jsonb",
-            },
-            vector_column="embedding",
-            on_conflict="update",
+            primary_key_fields=["filename", "location"],
+            vector_indexes=[
+                VectorIndex("embedding", VectorSimilarityMetric.COSINE_SIMILARITY)
+            ]
         )
-    )
-
-    # Store call relationships
-    calls_flow = files.explode("call_relationships")
-    calls_flow.add_sink(
-        functions.sinks.Postgres(
-            connection_string=os.getenv("DATABASE_URL"),
-            table_name="call_relationships",
-            columns={
-                "filename": "text",
-                "chunk_index": "integer",
-                "caller": "text",
-                "callee": "text",
-                "arguments": "text[]",
-                "line": "integer",
-                "column": "integer",
-                "context": "text",
-                "language": "text",
-            },
-            on_conflict="update",
+    else:
+        # JSON file storage for development
+        code_embeddings.export(
+            "code_index",
+            functions.storages.JsonFile(
+                path="./code_index.json",
+                mode="overwrite",
+            ),
+            primary_key_fields=["filename", "location"]
         )
-    )
 
-    # Store import relationships
-    imports_flow = files.explode("import_relationships")
-    imports_flow.add_sink(
-        functions.sinks.Postgres(
-            connection_string=os.getenv("DATABASE_URL"),
-            table_name="import_relationships",
-            columns={
-                "filename": "text",
-                "chunk_index": "integer",
-                "imported_from": "text",
-                "imported_items": "text[]",
-                "import_type": "text",
-                "line": "integer",
-                "language": "text",
-            },
-            on_conflict="update",
-        )
-    )
-else:
-    # JSON file storage for development
-
-    # Main index
-    chunks_flow.add_sink(
-        functions.sinks.JsonFile(
-            path="./code_index.json",
-            mode="overwrite",
-        )
-    )
-
-    # Call relationships
-    @flow.register_op
-    def collect_calls(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Collect all call relationships."""
-        all_calls = []
-        for row in rows:
-            calls = row.get("call_relationships", [])
-            for call in calls:
-                call["language"] = row.get("analyzer_language", "unknown")
-                all_calls.append(call)
-        return all_calls
-
-    calls_data = files.collect().transform(collect_calls)
-    calls_data.add_sink(
-        functions.sinks.JsonFile(
-            path="./call_relationships.json",
-            mode="overwrite",
-        )
-    )
-
-    # Import relationships
-    @flow.register_op
-    def collect_imports(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Collect all import relationships."""
-        all_imports = []
-        for row in rows:
-            imports = row.get("import_relationships", [])
-            for imp in imports:
-                imp["language"] = row.get("analyzer_language", "unknown")
-                all_imports.append(imp)
-        return all_imports
-
-    imports_data = files.collect().transform(collect_imports)
-    imports_data.add_sink(
-        functions.sinks.JsonFile(
-            path="./import_relationships.json",
-            mode="overwrite",
-        )
-    )
-
-# Build symbol index
-@flow.register_op
-def build_symbol_index(rows: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
-    """Build an index of symbols to their locations."""
-    symbol_index = {}
-
-    for row in rows:
-        chunk_data = row.get("chunk_data", {})
-        symbols = chunk_data.get("symbols", [])
-
-        for symbol in symbols:
-            if symbol not in symbol_index:
-                symbol_index[symbol] = []
-
-            symbol_index[symbol].append({
-                "filename": chunk_data.get("filename"),
-                "line_start": chunk_data.get("start_line"),
-                "line_end": chunk_data.get("end_line"),
-                "chunk_text": chunk_data.get("text", "")[:100] + "...",
-                "language": row.get("analyzer_language", "unknown")
-            })
-
-    return symbol_index
-
-# Export symbol index
-symbol_index = chunks_flow.collect().transform(build_symbol_index)
-symbol_index.add_sink(
-    functions.sinks.JsonFile(
-        path="./symbol_index.json",
-        mode="overwrite",
-    )
-)
-
-# Language statistics
-@flow.register_op
-def build_language_stats(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Build statistics about analyzed languages."""
-    stats = {
-        "total_files": 0,
-        "languages": {},
-        "analyzers_used": set()
-    }
-
-    for row in rows:
-        stats["total_files"] += 1
-
-        lang = row.get("analyzer_language", "unknown")
-        if lang not in stats["languages"]:
-            stats["languages"][lang] = {
-                "file_count": 0,
-                "call_count": 0,
-                "import_count": 0,
-                "has_analyzer": row.get("has_analyzer", False)
-            }
-
-        stats["languages"][lang]["file_count"] += 1
-        stats["languages"][lang]["call_count"] += len(row.get("call_relationships", []))
-        stats["languages"][lang]["import_count"] += len(row.get("import_relationships", []))
-
-        if row.get("has_analyzer"):
-            stats["analyzers_used"].add(lang)
-
-    stats["analyzers_used"] = list(stats["analyzers_used"])
-    return stats
-
-language_stats = files.collect().transform(build_language_stats)
-language_stats.add_sink(
-    functions.sinks.JsonFile(
-        path="./language_stats.json",
-        mode="overwrite",
-    )
-)
+# Make flow available at module level
+flow = flexible_code_index_flow
 
 if __name__ == "__main__":
     logger.info("Starting flexible code indexing with pluggable analyzers...")
