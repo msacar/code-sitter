@@ -52,6 +52,10 @@ def index(path: str, watch: bool, postgres: bool, flow: str):
     # Set environment variables
     if postgres:
         os.environ['USE_POSTGRES'] = 'true'
+        # Set COCOINDEX_DATABASE_URL if not already set
+        if not os.getenv('COCOINDEX_DATABASE_URL'):
+            database_url = os.getenv('DATABASE_URL', 'postgresql://postgres:secret@localhost:5432/cocoindex')
+            os.environ['COCOINDEX_DATABASE_URL'] = database_url
         # Check if DATABASE_URL is set
         if not os.getenv('DATABASE_URL'):
             console.print("[yellow]Warning: DATABASE_URL not set. Using default localhost[/yellow]")

@@ -1,5 +1,17 @@
 """codesitter CLI Interface."""
 
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load .env file from the current directory or project root
+env_path = Path(__file__).parent.parent.parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    # Try current working directory
+    load_dotenv()
+
 import click
 import logging
 
