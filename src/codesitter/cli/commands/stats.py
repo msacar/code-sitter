@@ -1,4 +1,4 @@
-"""Stats command for Code-Sitter CLI."""
+"""Stats command for codesitter CLI."""
 
 import click
 import json
@@ -23,7 +23,7 @@ def stats():
     code_index_path = Path(DEFAULT_CODE_INDEX_PATH)
 
     if not symbol_index_path.exists() and not code_index_path.exists():
-        console.print("[yellow]No index files found. Run 'code-sitter index' first.[/yellow]")
+        console.print("[yellow]No index files found. Run 'codesitter index' first.[/yellow]")
         return
 
     stats_table = Table(title="Codebase Statistics")

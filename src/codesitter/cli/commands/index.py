@@ -1,4 +1,4 @@
-"""Index command for Code-Sitter CLI."""
+"""Index command for codesitter CLI."""
 
 import click
 import os
@@ -45,7 +45,7 @@ def index(path: str, watch: bool, postgres: bool, flow: str):
         f"[bold]Storage:[/bold] {'PostgreSQL' if postgres else 'JSON file'}\n"
         f"[bold]Watch mode:[/bold] {'Enabled' if watch else 'Disabled'}\n"
         f"[bold]Flow:[/bold] {flow} ({flow_path.name})",
-        title="Code-Sitter Indexer"
+        title="codesitter Indexer"
     ))
 
     # Set environment variables

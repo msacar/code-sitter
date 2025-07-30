@@ -1,6 +1,6 @@
-# Code-Sitter: Pluggable Multi-Language Code Intelligence
+# codesitter: Pluggable Multi-Language Code Intelligence
 
-Code-Sitter delivers a real‑time, syntax‑aware indexing and retrieval system for codebases across multiple programming languages. Built with a **pluggable analyzer architecture**, it leverages Tree‑sitter for precise parsing and CocoIndex's Python SDK for incremental chunking, embedding, and storage. This enables fast lookup of code symbols, functions, call‑site details, and cross-language dependencies while staying in sync with live code changes.
+codesitter delivers a real‑time, syntax‑aware indexing and retrieval system for codebases across multiple programming languages. Built with a **pluggable analyzer architecture**, it leverages Tree‑sitter for precise parsing and CocoIndex's Python SDK for incremental chunking, embedding, and storage. This enables fast lookup of code symbols, functions, call‑site details, and cross-language dependencies while staying in sync with live code changes.
 
 ## ✨ Key Features
 
@@ -13,7 +13,7 @@ Code-Sitter delivers a real‑time, syntax‑aware indexing and retrieval system
 
 ## 🏗️ Architecture
 
-Code-Sitter uses a modular architecture where each programming language can optionally provide:
+codesitter uses a modular architecture where each programming language can optionally provide:
 
 ```
 Language → Analyzer → Extracted Data
@@ -46,18 +46,18 @@ uv pip install -e .
 
 ```bash
 # Index a multi-language project
-code-sitter index --path /path/to/project
+codesitter index --path /path/to/project
 
 # Search across languages
-code-sitter search "database connection" --type semantic
-code-sitter search "useState" --type symbol
-code-sitter search "processData" --type calls
+codesitter search "database connection" --type semantic
+codesitter search "useState" --type symbol
+codesitter search "processData" --type calls
 
 # Watch for changes
-code-sitter index --watch
+codesitter index --watch
 
 # View statistics
-code-sitter stats
+codesitter stats
 ```
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) for more detailed getting started instructions.
@@ -87,7 +87,7 @@ These languages get basic syntax-aware chunking without custom analysis:
 
 ### Adding a New Language
 
-Create a file in `src/code_sitter/analyzers/languages/`:
+Create a file in `src/codesitter/analyzers/languages/`:
 
 ```python
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
@@ -113,31 +113,31 @@ The analyzer will be auto-discovered on startup! See [docs/ADDING_LANGUAGES.md](
 ### 1. Symbol Search
 Find functions, classes, and variables by name:
 ```bash
-code-sitter search "UserController" --type symbol
+codesitter search "UserController" --type symbol
 ```
 
 ### 2. Semantic Search
 Use natural language to find relevant code:
 ```bash
-code-sitter search "code that handles user authentication" --type semantic
+codesitter search "code that handles user authentication" --type semantic
 ```
 
 ### 3. Call Site Analysis
 Find where functions are called:
 ```bash
-code-sitter search "validateUser" --type calls
+codesitter search "validateUser" --type calls
 ```
 
 ### 4. Definition Lookup
 Jump to function definitions:
 ```bash
-code-sitter search "handleSubmit" --type definition
+codesitter search "handleSubmit" --type definition
 ```
 
 ### 5. Dependency Analysis
 Analyze file imports and exports:
 ```bash
-code-sitter analyze src/components/Button.tsx
+codesitter analyze src/components/Button.tsx
 ```
 
 ## 💾 Storage Options
@@ -154,13 +154,13 @@ For production and large codebases:
 ```bash
 export DATABASE_URL="postgresql://user:pass@localhost:5432/code_index"
 export USE_POSTGRES=true
-code-sitter index
+codesitter index
 ```
 
 ## 🛠️ Programmatic Usage
 
 ```python
-from code_sitter.query import CodeSearchEngine
+from codesitter.query import CodeSearchEngine
 
 # Initialize search engine
 engine = CodeSearchEngine()
@@ -192,8 +192,8 @@ engine.close()
 ## 📁 Project Structure
 
 ```
-code-sitter/
-├── src/code_sitter/          # Main package (src layout)
+codesitter/
+├── src/codesitter/          # Main package (src layout)
 │   ├── __init__.py
 │   ├── __main__.py           # Module entry point
 │   ├── cli/                  # CLI interface
@@ -235,7 +235,7 @@ code-sitter/
 
 1. Fork the repository
 2. Create a feature branch
-3. Add your language analyzer in `src/code_sitter/analyzers/languages/`
+3. Add your language analyzer in `src/codesitter/analyzers/languages/`
 4. Add tests
 5. Submit a pull request
 

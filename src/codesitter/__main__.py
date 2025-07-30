@@ -1,4 +1,4 @@
-"""Main entry point for code-sitter CLI."""
+"""Main entry point for codesitter CLI."""
 
 from .cli import cli
 

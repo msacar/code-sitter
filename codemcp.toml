@@ -1,5 +1,5 @@
 project_prompt = """
-You are working on code-sitter. Before making any changes:
+You are working on codesitter. Before making any changes:
 1. Review the existing code structure
 2. Follow the established patterns and naming conventions
 3. Run build after significant changes

@@ -11,8 +11,8 @@ Available flows:
 
 Usage:
     # From command line
-    cocoindex update src/code_sitter/flows/simple.py
+    cocoindex update src/codesitter/flows/simple.py
 
-    # Or via code-sitter CLI
-    code-sitter index --flow simple
+    # Or via codesitter CLI
+    codesitter index --flow simple
 """

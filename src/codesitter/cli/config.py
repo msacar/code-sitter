@@ -1,4 +1,4 @@
-"""Configuration for Code-Sitter CLI."""
+"""Configuration for codesitter CLI."""
 
 import os
 from pathlib import Path

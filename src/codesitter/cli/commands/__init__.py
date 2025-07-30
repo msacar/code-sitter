@@ -1,4 +1,4 @@
-"""CLI commands for Code-Sitter."""
+"""CLI commands for codesitter."""
 
 # Import commands to make them available
 from . import index, search, stats, analyze

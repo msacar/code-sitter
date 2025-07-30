@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Code-Sitter Example Usage
+codesitter Example Usage
 
-This script demonstrates how to use Code-Sitter programmatically
+This script demonstrates how to use codesitter programmatically
 for indexing and searching TypeScript codebases.
 """
 
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-from code_sitter.query import CodeSearchEngine
+from codesitter.query import CodeSearchEngine
 from rich import print as rprint
 from rich.console import Console
 from rich.syntax import Syntax
@@ -112,12 +112,12 @@ def example_analyze_file():
 
 def main():
     """Run all examples."""
-    console.print("[bold]Code-Sitter Examples[/bold]\n")
+    console.print("[bold]codesitter Examples[/bold]\n")
 
     # Check if index exists
     if not Path("code_index.json").exists() and not os.getenv("DATABASE_URL"):
         console.print("[red]Error: No index found![/red]")
-        console.print("Run 'code-sitter index' first to index your codebase.")
+        console.print("Run 'codesitter index' first to index your codebase.")
         sys.exit(1)
 
     try:
@@ -128,8 +128,8 @@ def main():
         example_analyze_file()
 
         console.print("\n[green]✓ All examples completed![/green]")
-        console.print("\nTo use Code-Sitter CLI, run:")
-        console.print("  [cyan]code-sitter --help[/cyan]")
+        console.print("\nTo use codesitter CLI, run:")
+        console.print("  [cyan]codesitter --help[/cyan]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")

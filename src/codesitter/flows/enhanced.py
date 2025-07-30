@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional, Iterator
 
 # Add the src directory to Python path for imports
 current_file = Path(__file__).resolve()
-src_dir = current_file.parent.parent.parent  # flows -> code_sitter -> src
+src_dir = current_file.parent.parent.parent  # flows -> codesitter -> src
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 

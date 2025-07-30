@@ -1,7 +1,7 @@
-# Code-Sitter Scripts
+# codesitter Scripts
 
-This folder contains example scripts and utilities for using Code-Sitter.
+This folder contains example scripts and utilities for using codesitter.
 
 ## Scripts
 
-- `example.py` - Demonstrates programmatic usage of Code-Sitter for indexing and searching
+- `example.py` - Demonstrates programmatic usage of codesitter for indexing and searching

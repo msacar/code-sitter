@@ -1,16 +1,16 @@
-# Code-Sitter Architecture
+# codesitter Architecture
 
 ## Overview
 
-Code-Sitter uses a **pluggable analyzer architecture** that allows different programming languages to have custom analysis capabilities while sharing a common indexing infrastructure.
+codesitter uses a **pluggable analyzer architecture** that allows different programming languages to have custom analysis capabilities while sharing a common indexing infrastructure.
 
 ## Architecture Components
 
 ### 1. Core Components
 
 ```
-code-sitter/
-├── src/code_sitter/          # Main package (src layout)
+codesitter/
+├── src/codesitter/          # Main package (src layout)
 │   ├── analyzers/            # Language analyzer system
 │   │   ├── __init__.py      # Package initialization
 │   │   ├── base.py          # Base classes and interfaces
@@ -97,10 +97,10 @@ DefaultAnalyzer([".rs"], "rust"),
 
 #### Option 2: Create Custom Analyzer
 
-Create a new file in `src/code_sitter/analyzers/languages/`:
+Create a new file in `src/codesitter/analyzers/languages/`:
 
 ```python
-# src/code_sitter/analyzers/languages/mylang.py
+# src/codesitter/analyzers/languages/mylang.py
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
 
 class MyLangAnalyzer(LanguageAnalyzer):

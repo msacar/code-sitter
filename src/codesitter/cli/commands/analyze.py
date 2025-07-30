@@ -1,4 +1,4 @@
-"""Analyze command for Code-Sitter CLI."""
+"""Analyze command for codesitter CLI."""
 
 import click
 import sys

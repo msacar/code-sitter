@@ -1,16 +1,16 @@
 # Adding Custom Language Analyzers
 
-This guide explains how to add support for new programming languages to Code-Sitter.
+This guide explains how to add support for new programming languages to codesitter.
 
 ## Overview
 
-Code-Sitter uses a pluggable architecture where each language can have its own analyzer. Languages without custom analyzers automatically get basic syntax-aware chunking from CocoIndex.
+codesitter uses a pluggable architecture where each language can have its own analyzer. Languages without custom analyzers automatically get basic syntax-aware chunking from CocoIndex.
 
 ## Quick Example: Adding Ruby Support
 
 ### 1. Create the Analyzer File
 
-Create `src/code_sitter/analyzers/languages/ruby.py`:
+Create `src/codesitter/analyzers/languages/ruby.py`:
 
 ```python
 from typing import Iterator, List, Dict, Any
@@ -49,7 +49,7 @@ class RubyAnalyzer(LanguageAnalyzer):
 
 ### 2. That's It!
 
-The analyzer will be auto-discovered when Code-Sitter starts. No registration needed!
+The analyzer will be auto-discovered when codesitter starts. No registration needed!
 
 ## Advanced Example: Adding Go Support with AST
 
@@ -64,7 +64,7 @@ pip install tree-sitter-go
 ### 2. Create Advanced Analyzer
 
 ```python
-# src/code_sitter/analyzers/languages/go.py
+# src/codesitter/analyzers/languages/go.py
 from tree_sitter import Language, Parser, Query
 import tree_sitter_go as ts_go
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship
@@ -150,8 +150,8 @@ def extract_custom_metadata(self, chunk: CodeChunk) -> Dict[str, Any]:
 
 ```python
 # test_my_analyzer.py
-from code_sitter.analyzers.languages.mylang import MyLangAnalyzer
-from code_sitter.analyzers.base import CodeChunk
+from codesitter.analyzers.languages.mylang import MyLangAnalyzer
+from codesitter.analyzers.base import CodeChunk
 
 def test_import_extraction():
     analyzer = MyLangAnalyzer()
@@ -218,13 +218,13 @@ def debug_ast(self, chunk: CodeChunk):
 
 3. **Test with Small Examples**:
 ```bash
-echo 'print("hello")' | code-sitter index --debug
+echo 'print("hello")' | codesitter index --debug
 ```
 
 ## Contributing Your Analyzer
 
 1. Fork the repository
-2. Create your analyzer in `src/code_sitter/analyzers/languages/`
+2. Create your analyzer in `src/codesitter/analyzers/languages/`
 3. Add tests
 4. Update the language support table in README
 5. Submit a pull request

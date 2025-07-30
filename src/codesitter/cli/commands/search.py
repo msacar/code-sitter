@@ -1,4 +1,4 @@
-"""Search command for Code-Sitter CLI."""
+"""Search command for codesitter CLI."""
 
 import click
 import sys

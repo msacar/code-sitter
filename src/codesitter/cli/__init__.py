@@ -1,4 +1,4 @@
-"""Code-Sitter CLI Interface."""
+"""codesitter CLI Interface."""
 
 import click
 import logging
@@ -11,11 +11,11 @@ logging.basicConfig(
 
 
 @click.group()
-@click.version_option(prog_name='code-sitter')
+@click.version_option(prog_name='codesitter')
 @click.pass_context
 def cli(ctx):
     """
-    Code-Sitter: Real-time code intelligence for your codebase.
+    codesitter: Real-time code intelligence for your codebase.
 
     Index and search through codebases with language-aware analysis.
     """

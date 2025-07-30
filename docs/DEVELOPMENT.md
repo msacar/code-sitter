@@ -2,11 +2,11 @@
 
 ## Project Structure
 
-Code-Sitter follows the **src layout** pattern, which is the modern best practice for Python projects:
+codesitter follows the **src layout** pattern, which is the modern best practice for Python projects:
 
 ```
-code-sitter/
-├── src/code_sitter/     # Main package code
+codesitter/
+├── src/codesitter/     # Main package code
 ├── scripts/             # Standalone scripts
 ├── tests/              # Test suite
 ├── docs/               # Documentation
@@ -36,17 +36,17 @@ code-sitter/
 ### As a CLI tool:
 ```bash
 # After installation
-code-sitter --help
-code-sitter index --path /path/to/project
+codesitter --help
+codesitter index --path /path/to/project
 
 # Or directly as a module
-python -m code_sitter --help
+python -m codesitter --help
 ```
 
 ### Programmatically:
 ```python
-from code_sitter.query import CodeSearchEngine
-from code_sitter.analyzers import get_analyzer
+from codesitter.query import CodeSearchEngine
+from codesitter.analyzers import get_analyzer
 
 # Use the API
 engine = CodeSearchEngine()
@@ -60,7 +60,7 @@ results = engine.search_symbol("useState")
 pytest
 
 # Run with coverage
-pytest --cov=code_sitter
+pytest --cov=codesitter
 
 # Run specific test
 pytest tests/test_analyzers.py::test_typescript_analyzer
@@ -80,14 +80,14 @@ ruff format src/ tests/
 ruff check src/ tests/
 
 # Type checking
-mypy src/code_sitter
+mypy src/codesitter
 ```
 
 ## Adding New Features
 
 ### Adding a Language Analyzer
 
-1. Create a new file in `src/code_sitter/analyzers/languages/`
+1. Create a new file in `src/codesitter/analyzers/languages/`
 2. Implement the `LanguageAnalyzer` interface
 3. The analyzer will be auto-discovered
 
@@ -95,7 +95,7 @@ See [docs/ADDING_LANGUAGES.md](ADDING_LANGUAGES.md) for details.
 
 ### Adding New Commands
 
-1. Add new command functions in `src/code_sitter/cli/commands/`
+1. Add new command functions in `src/codesitter/cli/commands/`
 2. Use Click decorators for command definition
 3. Import and register in `cli/__init__.py`
 4. Update help text and documentation
@@ -153,13 +153,13 @@ cli/
 
 ### Adding a New Command
 
-1. Create a new file in `src/code_sitter/cli/commands/`
+1. Create a new file in `src/codesitter/cli/commands/`
 2. Define your command using Click decorators
 3. Import and register it in `cli/__init__.py`
 
 Example:
 ```python
-# src/code_sitter/cli/commands/mycommand.py
+# src/codesitter/cli/commands/mycommand.py
 import click
 
 @click.command()
@@ -168,7 +168,7 @@ def mycommand(flag):
     """Description of my command."""
     # Implementation
 
-# In src/code_sitter/cli/__init__.py
+# In src/codesitter/cli/__init__.py
 from .commands import mycommand
 cli.add_command(mycommand.mycommand)
 ```
@@ -176,6 +176,6 @@ cli.add_command(mycommand.mycommand)
 ## Tips
 
 - Always use relative imports within the package (e.g., `from .query import ...`)
-- Scripts should use absolute imports (e.g., `from code_sitter.query import ...`)
+- Scripts should use absolute imports (e.g., `from codesitter.query import ...`)
 - Keep configuration files at the project root
-- Put all package code under `src/code_sitter/`
+- Put all package code under `src/codesitter/`
