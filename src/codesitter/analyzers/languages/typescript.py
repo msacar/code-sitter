@@ -27,7 +27,13 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
         self._ts_language = get_language("typescript")
         self._tsx_language = get_language("tsx")
         self._js_language = get_language("javascript")
-        self._jsx_language = get_language("jsx")
+
+        # JSX might not be a separate language, use JavaScript as fallback
+        try:
+            self._jsx_language = get_language("jsx")
+        except Exception:
+            logger.warning("JSX language not found, using JavaScript parser for .jsx files")
+            self._jsx_language = self._js_language
 
         self._language_map = {
             ".ts": self._ts_language,

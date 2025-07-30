@@ -27,6 +27,7 @@ BASIC_FLOW_PATH = FLOW_DIR / "basic.py"
 ENHANCED_FLOW_PATH = FLOW_DIR / "enhanced.py"
 FLEXIBLE_FLOW_PATH = FLOW_DIR / "flexible.py"
 SIMPLE_FLOW_PATH = FLOW_DIR / "simple.py"
+MINIMAL_FLEXIBLE_FLOW_PATH = FLOW_DIR / "minimal_flexible.py"
 
 # Display settings
 MAX_CODE_PREVIEW_LENGTH = 200

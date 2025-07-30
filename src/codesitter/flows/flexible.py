@@ -16,7 +16,7 @@ src_dir = current_file.parent.parent.parent  # flows -> codesitter -> src
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-from cocoindex import FlowBuilder, sources, functions, op, flow_def, DataScope, VectorIndex, VectorSimilarityMetric
+from cocoindex import FlowBuilder, sources, functions, op, flow_def, DataScope, VectorIndexDef, VectorSimilarityMetric
 from sentence_transformers import SentenceTransformer
 import logging
 
@@ -62,7 +62,9 @@ def get_language_for_cocoindex(filename: str) -> str:
     fallback_map = {
         ".py": "python",
         ".js": "javascript",
+        ".jsx": "javascript",  # JSX uses JavaScript parser
         ".ts": "typescript",
+        ".tsx": "typescript",  # TSX uses TypeScript parser
         ".java": "java",
         ".cpp": "cpp",
         ".c": "c",
@@ -223,8 +225,18 @@ def flexible_code_index_flow(flow_builder: FlowBuilder, data_scope: DataScope):
     )
 
     # Add file metadata
-    data_scope["files"]["ext"] = data_scope["files"]["filename"].transform(extract_extension)
-    data_scope["files"]["language"] = data_scope["files"]["filename"].transform(get_language_for_cocoindex)
+    # Use data_scope directly without aliasing to avoid struct type errors
+    data_scope["files"]["ext"] = (
+        data_scope["files"]["filename"]
+        .transform(extract_extension)
+    )
+    data_scope["files"]["language"] = (
+        data_scope["files"]["filename"]
+        .transform(get_language_for_cocoindex)
+    )
+
+    # Note: Cannot log DataSlice objects directly
+    logger.info(f"Source files configured, supported languages: {list(supported_exts.values())}")
 
     # Configure syntax-aware chunking
     data_scope["files"]["chunks"] = data_scope["files"]["content"].transform(
@@ -243,6 +255,10 @@ def flexible_code_index_flow(flow_builder: FlowBuilder, data_scope: DataScope):
 
     # Process chunks for embedding
     with data_scope["files"].row() as file:
+        # Debug log per file (safe within row context)
+        # Using single quotes inside the f-string for clarity
+        logger.debug(f"Processing file: {file['filename']}")
+
         # Process each chunk in the file
         with file["chunks"].row() as chunk:
             # Generate embedding for chunk text
@@ -270,7 +286,7 @@ def flexible_code_index_flow(flow_builder: FlowBuilder, data_scope: DataScope):
             ),
             primary_key_fields=["filename", "location"],
             vector_indexes=[
-                VectorIndex("embedding", VectorSimilarityMetric.COSINE_SIMILARITY)
+                VectorIndexDef("embedding", VectorSimilarityMetric.COSINE_SIMILARITY)
             ]
         )
     else:

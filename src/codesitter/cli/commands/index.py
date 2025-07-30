@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.panel import Panel
 
-from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, SIMPLE_FLOW_PATH
+from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, SIMPLE_FLOW_PATH, MINIMAL_FLEXIBLE_FLOW_PATH
 
 console = Console()
 
@@ -20,7 +20,7 @@ console = Console()
 @click.option('--watch', '-w', is_flag=True, help='Watch for file changes')
 @click.option('--postgres', is_flag=True, help='Use PostgreSQL for storage')
 @click.option('--flow', '-f',
-              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible']),
+              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible', 'minimal_flexible']),
               default='simple',
               help='Which flow to use for indexing')
 def index(path: str, watch: bool, postgres: bool, flow: str):
@@ -36,7 +36,8 @@ def index(path: str, watch: bool, postgres: bool, flow: str):
         'basic': BASIC_FLOW_PATH,
         'simple': SIMPLE_FLOW_PATH,
         'enhanced': ENHANCED_FLOW_PATH,
-        'flexible': FLEXIBLE_FLOW_PATH
+        'flexible': FLEXIBLE_FLOW_PATH,
+        'minimal_flexible': MINIMAL_FLEXIBLE_FLOW_PATH
     }
     flow_path = flow_map[flow]
 

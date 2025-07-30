@@ -150,6 +150,10 @@ def register_defaults():
         DefaultAnalyzer([".html", ".htm"], "html"),
         DefaultAnalyzer([".css", ".scss", ".sass"], "css"),
 
+        # JavaScript/TypeScript (fallback if custom analyzer fails)
+        DefaultAnalyzer([".js", ".jsx", ".mjs", ".cjs"], "javascript"),
+        DefaultAnalyzer([".ts", ".tsx"], "typescript"),
+
         # Config languages
         DefaultAnalyzer([".json"], "json"),
         DefaultAnalyzer([".yaml", ".yml"], "yaml"),
