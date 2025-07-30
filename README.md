@@ -48,6 +48,9 @@ uv pip install -e .
 # Index a multi-language project
 codesitter index --path /path/to/project
 
+# Index with TypeScript metadata extraction (React components, interfaces, etc.)
+codesitter index --path /path/to/project --flow analyzer_simple --postgres
+
 # Search across languages
 codesitter search "database connection" --type semantic
 codesitter search "useState" --type symbol
@@ -58,6 +61,23 @@ codesitter index --watch
 
 # View statistics
 codesitter stats
+```
+
+### Using TypeScript Analyzer
+
+To leverage the full TypeScript analyzer that extracts metadata:
+
+```bash
+# Setup (first time only)
+export USE_POSTGRES=true
+export COCOINDEX_DATABASE_URL="postgresql://user:pass@localhost:5432/dbname"
+cocoindex setup /path/to/codesitter/src/codesitter/flows/analyzer_simple.py
+
+# Index with analyzer
+codesitter index -p /your/typescript/project --flow analyzer_simple --postgres
+
+# Query results
+psql $COCOINDEX_DATABASE_URL -c "SELECT filename FROM code_analysis WHERE is_react_component = true;"
 ```
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) for more detailed getting started instructions.
@@ -248,3 +268,62 @@ MIT License - see LICENSE file for details
 - [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) for syntax parsing
 - [CocoIndex](https://cocoindex.io/) for incremental indexing
 - [pgvector](https://github.com/pgvector/pgvector) for vector search
+
+# DEVELOPER THINGS
+## Postgress installation
+DAT POSTGRE !
+The pgvector/pgvector:pg17 Docker image includes pgvector but doesn't automatically install the extension
+You need to run CREATE EXTENSION vector to actually enable it in your database
+```bash
+docker exec -it cocoindex-postgres-postgres-1 psql -U cocoindex -d cocoindex
+```
+```sql
+-- If not installed, create it
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+## Postgress cleanup
+
+1. Clean up the partial setup:
+```bash
+docker exec -it cocoindex-postgres-postgres-1 psql -U cocoindex -d cocoindex
+```
+```sql
+-- Clean up any partial tables
+DROP TABLE IF EXISTS FlexibleCodeIndex__code_chunks CASCADE;
+DROP TABLE IF EXISTS FlexibleCodeIndex__cocoindex_tracking CASCADE;
+```
+
+2. Run setup again with the fixed flow:
+```bash
+cocoindex update --setup /Users/mustafaacar/codesitter/src/codesitter/flows/flexible.py
+```
+**This time it should work because:**
+The embed function now returns Vector[float, Literal[384]] instead of List[float]
+CocoIndex knows the exact dimension (384) at flow definition time
+It will create a proper vector(384) column instead of JSONB
+The HNSW index can be created on a proper vector column
+
+3. After successful setup, run the indexing:
+```bash
+codesitter index -p /Users/mustafaacar/retter/shortlink --flow flexible --postgres
+What we changed:
+```
+
+https://cocoindexio.substack.com/p/index-codebase-with-tree-sitter-and
+
+### Serving the UI and API
+```bash
+cd /Users/mustafaacar/retter/shortlink
+cocoindex server /Users/mustafaacar/codesitter/src/codesitter/flows/flexible.py -ci --address 0.0.0.0:3000
+```
+you should see:
+```text
+Server running at http://0.0.0.0:3000/cocoindex
+Open CocoInsight at: https://cocoindex.io/cocoinsight
+```
+api: http://0.0.0.0:3000/cocoindex
+ui: https://cocoindex.io/cocoinsight
+**the cocoinsight should be pointed to the api endpoint**
+
+then all is done.

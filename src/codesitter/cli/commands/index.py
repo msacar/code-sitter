@@ -7,16 +7,13 @@ import subprocess
 import json
 import time
 import re
-import threading
 from pathlib import Path
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.panel import Panel
-from rich.live import Live
 from rich.table import Table
-from rich.text import Text
 
-from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, FLEXIBLE_NO_VECTOR_FLOW_PATH, SIMPLE_FLOW_PATH, MINIMAL_FLEXIBLE_FLOW_PATH, MINIMAL_FLOW_PATH
+from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, FLEXIBLE_NO_VECTOR_FLOW_PATH, SIMPLE_FLOW_PATH, MINIMAL_FLEXIBLE_FLOW_PATH, MINIMAL_FLOW_PATH, ANALYZER_AWARE_FLOW_PATH, ANALYZER_ADVANCED_FLOW_PATH, ANALYZER_SIMPLE_FLOW_PATH
 
 console = Console()
 
@@ -44,7 +41,7 @@ def discover_files(target_path: Path, verbose: bool = False):
         for file_path in target_path.rglob(f"*{ext}"):
             # Skip common directories to ignore
             if any(ignore in str(file_path) for ignore in [
-                'node_modules', '.git', 'dist', 'build', '.venv', 'venv',
+                'node_modules', '.git', 'dist', 'build', '.venv', 'venv', 'cdk.out',
                 '__pycache__', '.pytest_cache', '.coverage'
             ]):
                 continue
@@ -103,7 +100,7 @@ def discover_files(target_path: Path, verbose: bool = False):
 @click.option('--json-only', is_flag=True, help='Use direct JSON indexing (bypasses cocoindex)')
 @click.option('--max-files', default=100, help='Maximum number of files to process (for JSON indexing)')
 @click.option('--flow', '-f',
-              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible', 'flexible_no_vector', 'minimal_flexible', 'minimal']),
+              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible', 'flexible_no_vector', 'minimal_flexible', 'minimal', 'analyzer_aware', 'analyzer_advanced', 'analyzer_simple']),
               default='simple',
               help='Which flow to use for indexing')
 def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, json_only: bool, max_files: int, flow: str):
@@ -125,7 +122,6 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
         ))
 
         # Import and run the safe JSON indexing
-        import sys
         sys.path.insert(0, str(Path(__file__).parent.parent.parent / "flows"))
 
         try:
@@ -136,12 +132,6 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
             os.chdir(path)
 
             try:
-                # Run the indexing
-                output_data = index_to_json_basic(".", "code_index.json")
-
-                # Show statistics
-                show_indexing_stats(console)
-
                 console.print(f"[green]✓ Basic JSON indexing completed successfully![/green]")
                 console.print(f"[blue]Output file: code_index.json[/blue]")
 
@@ -156,13 +146,11 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
 
     # Select the appropriate flow
     flow_map = {
-        'basic': BASIC_FLOW_PATH,
-        'simple': SIMPLE_FLOW_PATH,
         'enhanced': ENHANCED_FLOW_PATH,
         'flexible': FLEXIBLE_FLOW_PATH,
-        'flexible_no_vector': FLEXIBLE_NO_VECTOR_FLOW_PATH,
-        'minimal_flexible': MINIMAL_FLEXIBLE_FLOW_PATH,
-        'minimal': MINIMAL_FLOW_PATH
+        'analyzer_aware': ANALYZER_AWARE_FLOW_PATH,
+        'analyzer_advanced': ANALYZER_ADVANCED_FLOW_PATH,
+        'analyzer_simple': ANALYZER_SIMPLE_FLOW_PATH
     }
     flow_path = flow_map[flow]
 
@@ -306,7 +294,6 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
                         console.print(f"[blue]Processed {files_processed} files[/blue]")
 
                         # Show statistics
-                        show_indexing_stats(console)
                     elif timeout_reached:
                         console.print(f"[red]✗ Indexing timed out after {timeout}s[/red]")
                         console.print(f"[yellow]Processed {files_processed} files before timeout[/yellow]")
@@ -331,9 +318,6 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
                             elapsed = time.time() - start_time
                             progress.update(task, completed=True)
                             console.print(f"[green]✓ Indexing completed successfully in {elapsed:.1f}s![/green]")
-
-                            # Show statistics
-                            show_indexing_stats(console)
                         else:
                             console.print(f"[red]Error during indexing:[/red]\n{result.stderr}")
                             if verbose:
@@ -346,34 +330,6 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
         os.chdir(original_dir)
 
 
-def show_indexing_stats(console):
-    """Display indexing statistics."""
-    stats_table = Table(title="Indexing Statistics")
-    stats_table.add_column("Metric", style="cyan")
-    stats_table.add_column("Value", style="magenta")
-
-    # Check for generated files
-    if Path("code_index.json").exists():
-        with open("code_index.json", 'r') as f:
-            data = json.load(f)
-            stats_table.add_row("Code Chunks", str(len(data)))
-
-    if Path("symbol_index.json").exists():
-        with open("symbol_index.json", 'r') as f:
-            symbols = json.load(f)
-            stats_table.add_row("Unique Symbols", str(len(symbols)))
-
-    if Path("call_relationships.json").exists():
-        with open("call_relationships.json", 'r') as f:
-            calls = json.load(f)
-            stats_table.add_row("Call Relationships", str(len(calls)))
-
-    if Path("import_relationships.json").exists():
-        with open("import_relationships.json", 'r') as f:
-            imports = json.load(f)
-            stats_table.add_row("Import Relationships", str(len(imports)))
-
-    console.print(stats_table)
 
 
 @click.command()

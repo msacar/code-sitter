@@ -145,12 +145,36 @@ def flexible_code_index_flow(flow_builder: FlowBuilder, data_scope: DataScope):
 
         with file["chunks"].row() as chunk:
             chunk["embedding"] = chunk["text"].transform(embed)
+
+            # Create CodeChunk object for analyzer
+            from codesitter.analyzers.base import CodeChunk
+            chunk_obj = CodeChunk(
+                text=chunk["text"].get(),
+                filename=file["filename"].get(),
+                start_line=chunk["location"].get()[0] if hasattr(chunk["location"], 'get') else 0,
+                end_line=chunk["location"].get()[1] if hasattr(chunk["location"], 'get') else 0,
+                node_type="",  # Would need Tree-sitter node type
+                symbols=[]
+            )
+
+            # Get analyzer and extract relationships
+            analyzer = get_analyzer(file["filename"].get())
+            custom_metadata = {}
+            if analyzer and analyzer.language_name != "default":
+                # Extract custom metadata
+                custom_metadata = analyzer.extract_custom_metadata(chunk_obj)
+
+                # TODO: Add separate collectors for relationships
+                # calls = list(analyzer.extract_call_relationships(chunk_obj))
+                # imports = list(analyzer.extract_import_relationships(chunk_obj))
+
             collector.collect(
                 filename=file["filename"],
                 location=chunk["location"],
                 chunk_text=chunk["text"],
                 embedding=chunk["embedding"],
                 language=file["language"],
+                custom_metadata=custom_metadata,  # Add this field
             )
 
     # 4. Export to Postgres or JSON file
