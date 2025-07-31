@@ -3,11 +3,11 @@
 from typing import Iterator, List, Dict, Any
 import logging
 
-from tree_sitter import Language, Parser
+from tree_sitter import Language, Parser, Query
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
-from ..parser_utils import create_parser
+from ..parser_utils import create_parser, query_captures
 
 logger = logging.getLogger(__name__)
 

@@ -3,11 +3,11 @@
 from typing import Iterator, List, Dict, Any
 import logging
 
-from tree_sitter import Language, Parser
+from tree_sitter import Language, Parser, Query, QueryCursor
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
-from ..parser_utils import create_parser
+from ..parser_utils import create_parser, query_captures
 
 logger = logging.getLogger(__name__)
 
@@ -126,17 +126,17 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
 
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
-            # Use language.query() instead of Query() constructor
-            query = language.query(self._call_query)
-            captures = query.captures(tree.root_node)
+            # Use Query() constructor instead of language.query()
+            query = Query(language, self._call_query)
+            captures = query_captures(query, tree.root_node)
 
             # Find containing function for context
-            func_query = language.query(self._function_query)
-            func_captures = func_query.captures(tree.root_node)
+            func_query = Query(language, self._function_query)
+            func_captures = query_captures(func_query, tree.root_node)
 
             # Build a map of byte ranges to function names
             func_ranges = {}
-            for name, node in func_captures:
+            for node, name in func_captures:
                 if name in ["function_name", "method_name", "var_name"]:
                     func_name = node.text.decode("utf8")
                     parent = node.parent
@@ -146,13 +146,13 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
                         func_ranges[(parent.start_byte, parent.end_byte)] = func_name
 
             # Process call expressions
-            for name, node in captures:
+            for node, name in captures:
                 if name == "call":
                     # Find callee
                     callee = None
                     args_text = ""
 
-                    for child_name, child_node in captures:
+                    for child_node, child_name in captures:
                         if child_name == "callee" and child_node.start_byte >= node.start_byte and child_node.end_byte <= node.end_byte:
                             callee = child_node.text.decode("utf8")
                         elif child_name == "args" and child_node.start_byte >= node.start_byte and child_node.end_byte <= node.end_byte:
@@ -197,14 +197,14 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
 
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
-            # Use language.query() instead of Query() constructor
-            query = language.query(self._import_query)
-            captures = query.captures(tree.root_node)
+            # Use Query() constructor instead of language.query()
+            query = Query(language, self._import_query)
+            captures = query_captures(query, tree.root_node)
 
             # Group captures by import statement
             imports = {}
 
-            for name, node in captures:
+            for node, name in captures:
                 if name == "import":
                     imports[node.start_byte] = {
                         "node": node,

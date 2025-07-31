@@ -3,7 +3,7 @@ Utility functions for tree-sitter parser creation.
 Handles API differences between tree-sitter versions.
 """
 
-from tree_sitter import Parser, Language, Query
+from tree_sitter import Parser, Language, Query, QueryCursor
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,9 +14,16 @@ def create_parser(language: Language) -> Parser:
     Create a tree-sitter parser with the given language.
     Handles API differences between tree-sitter versions.
     """
+    # Try the newer API first (Parser constructor with language)
+    try:
+        return Parser(language)
+    except Exception as e:
+        logger.debug(f"Failed to create parser with language in constructor: {e}")
+
+    # Try creating parser and setting language
     parser = Parser()
 
-    # Try the newer API first (parser.language property)
+    # Try the newer API (parser.language property)
     if hasattr(parser, 'language') and not callable(getattr(parser, 'language')):
         try:
             parser.language = language
@@ -32,25 +39,6 @@ def create_parser(language: Language) -> Parser:
         except Exception as e:
             logger.debug(f"Failed to use set_language method: {e}")
 
-    # Try passing language to constructor
-    try:
-        return Parser(language)
-    except Exception as e:
-        logger.debug(f"Failed to pass language to Parser constructor: {e}")
-
-    # Last resort - check if we need to call Language() on the language object
-    try:
-        if hasattr(language, '__call__'):
-            lang_instance = language()
-            parser = Parser()
-            if hasattr(parser, 'set_language'):
-                parser.set_language(lang_instance)
-            else:
-                parser.language = lang_instance
-            return parser
-    except Exception as e:
-        logger.debug(f"Failed to instantiate language: {e}")
-
     raise RuntimeError(
         f"Could not create parser with language. "
         f"Parser type: {type(parser)}, Language type: {type(language)}, "
@@ -60,53 +48,43 @@ def create_parser(language: Language) -> Parser:
 
 def query_captures(query: Query, node, start_byte=None, end_byte=None):
     """
-    Get captures from a query, handling API differences between tree-sitter versions.
+    Get captures from a query using the correct API.
 
-    In newer versions of tree-sitter, captures() requires byte range parameters.
+    In the current tree-sitter API (0.25.0+), Query objects don't have a captures() method.
+    Instead, we need to use QueryCursor to execute queries.
     """
-    # Try the newer API first (with byte range)
-    if hasattr(query, 'captures') and start_byte is not None and end_byte is not None:
-        try:
-            return query.captures(node, start_byte=start_byte, end_byte=end_byte)
-        except TypeError:
-            pass
+    # Create a QueryCursor with the query
+    cursor = QueryCursor(query)
 
-    # Try with positional byte range tuple
-    if hasattr(query, 'captures') and start_byte is not None and end_byte is not None:
-        try:
-            return query.captures(node, (start_byte, end_byte))
-        except TypeError:
-            pass
+    # Set byte range if provided
+    if start_byte is not None and end_byte is not None:
+        cursor.set_byte_range(start_byte, end_byte)
 
-    # Try the older API (without byte range)
-    if hasattr(query, 'captures'):
-        try:
-            return query.captures(node)
-        except TypeError as e:
-            # If it fails due to missing arguments, try with node's byte range
-            if 'start_byte' in str(e) or 'positional argument' in str(e):
-                try:
-                    return query.captures(node, start_byte=node.start_byte, end_byte=node.end_byte)
-                except:
-                    try:
-                        return query.captures(node, (node.start_byte, node.end_byte))
-                    except:
-                        pass
+    # Get captures using the cursor
+    captures_dict = cursor.captures(node)
 
-    # Try matches() as alternative
-    if hasattr(query, 'matches'):
-        try:
-            matches = query.matches(node)
-            # Convert matches to captures format
-            captures = []
-            for match in matches:
-                for capture in match[1]:
-                    captures.append(capture)
-            return captures
-        except:
-            pass
+    # Convert the dictionary format to a list of (node, name) tuples
+    # to match the old API format that the analyzers expect
+    captures_list = []
+    for capture_name, nodes in captures_dict.items():
+        for node in nodes:
+            captures_list.append((node, capture_name))
 
-    raise RuntimeError(
-        f"Could not execute query. Query type: {type(query)}, "
-        f"Query methods: {[m for m in dir(query) if not m.startswith('_') and callable(getattr(query, m))]}"
-    )
+    return captures_list
+
+
+def query_matches(query: Query, node, start_byte=None, end_byte=None):
+    """
+    Get matches from a query using the correct API.
+
+    Returns matches in the format: [(pattern_index, {capture_name: [nodes]}), ...]
+    """
+    # Create a QueryCursor with the query
+    cursor = QueryCursor(query)
+
+    # Set byte range if provided
+    if start_byte is not None and end_byte is not None:
+        cursor.set_byte_range(start_byte, end_byte)
+
+    # Get matches using the cursor
+    return cursor.matches(node)
