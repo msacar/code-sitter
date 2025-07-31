@@ -48,6 +48,9 @@ uv pip install -e .
 # Index a multi-language project
 codesitter index --path /path/to/project
 
+# NEW: Use smart chunking for better analysis
+codesitter index --path /path/to/project --flow smart_chunking
+
 # Index with TypeScript metadata extraction (React components, interfaces, etc.)
 codesitter index --path /path/to/project --flow analyzer_simple --postgres
 
@@ -153,6 +156,27 @@ Jump to function definitions:
 ```bash
 codesitter search "handleSubmit" --type definition
 ```
+
+## 🧠 Smart Chunking (NEW!)
+
+Traditional code indexing splits files arbitrarily, breaking functions and losing context. Our **smart chunking** system analyzes code structure first, creating intelligent chunks that preserve meaning:
+
+### Benefits
+- **Complete Functions**: Never splits functions in half
+- **Context Preservation**: Every chunk includes necessary imports
+- **Better Incremental Updates**: Only reindex what actually changed
+- **Rich Metadata**: Know what's in each chunk without parsing
+
+### Usage
+```bash
+# Use smart chunking for better results
+codesitter index --flow smart_chunking
+
+# Compare traditional vs smart chunking
+python compare_chunking.py
+```
+
+See [docs/SMART_CHUNKING.md](docs/SMART_CHUNKING.md) for details.
 
 ### 5. Dependency Analysis
 Analyze file imports and exports:

@@ -13,7 +13,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskPr
 from rich.panel import Panel
 from rich.table import Table
 
-from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, FLEXIBLE_NO_VECTOR_FLOW_PATH, SIMPLE_FLOW_PATH, MINIMAL_FLEXIBLE_FLOW_PATH, MINIMAL_FLOW_PATH, ANALYZER_AWARE_FLOW_PATH, ANALYZER_ADVANCED_FLOW_PATH, ANALYZER_SIMPLE_FLOW_PATH, ANALYZER_DETAILED_FLOW_PATH
+from ..config import BASIC_FLOW_PATH, ENHANCED_FLOW_PATH, FLEXIBLE_FLOW_PATH, FLEXIBLE_NO_VECTOR_FLOW_PATH, SIMPLE_FLOW_PATH, MINIMAL_FLEXIBLE_FLOW_PATH, MINIMAL_FLOW_PATH, ANALYZER_AWARE_FLOW_PATH, ANALYZER_ADVANCED_FLOW_PATH, ANALYZER_SIMPLE_FLOW_PATH, ANALYZER_DETAILED_FLOW_PATH, SMART_CHUNKING_FLOW_PATH
 
 console = Console()
 
@@ -100,7 +100,7 @@ def discover_files(target_path: Path, verbose: bool = False):
 @click.option('--json-only', is_flag=True, help='Use direct JSON indexing (bypasses cocoindex)')
 @click.option('--max-files', default=100, help='Maximum number of files to process (for JSON indexing)')
 @click.option('--flow', '-f',
-              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible', 'flexible_no_vector', 'minimal_flexible', 'minimal', 'analyzer_aware', 'analyzer_advanced', 'analyzer_simple', 'analyzer_detailed']),
+              type=click.Choice(['basic', 'simple', 'enhanced', 'flexible', 'flexible_no_vector', 'minimal_flexible', 'minimal', 'analyzer_aware', 'analyzer_advanced', 'analyzer_simple', 'analyzer_detailed', 'smart_chunking']),
               default='simple',
               help='Which flow to use for indexing')
 def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, json_only: bool, max_files: int, flow: str):
@@ -156,7 +156,8 @@ def index(path: str, watch: bool, postgres: bool, verbose: bool, timeout: int, j
         'analyzer_aware': ANALYZER_AWARE_FLOW_PATH,
         'analyzer_advanced': ANALYZER_ADVANCED_FLOW_PATH,
         'analyzer_simple': ANALYZER_SIMPLE_FLOW_PATH,
-        'analyzer_detailed': ANALYZER_DETAILED_FLOW_PATH
+        'analyzer_detailed': ANALYZER_DETAILED_FLOW_PATH,
+        'smart_chunking': SMART_CHUNKING_FLOW_PATH
     }
     flow_path = flow_map[flow]
 
