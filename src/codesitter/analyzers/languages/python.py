@@ -7,6 +7,7 @@ from tree_sitter import Language, Parser, Query
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
+from ..parser_utils import create_parser
 
 logger = logging.getLogger(__name__)
 
@@ -105,8 +106,7 @@ class PythonAnalyzer(LanguageAnalyzer):
         chunk: CodeChunk
     ) -> Iterator[CallRelationship]:
         """Extract function calls from Python code."""
-        parser = Parser()
-        parser.set_language(self._language)
+        parser = create_parser(self._language)
 
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
@@ -185,8 +185,7 @@ class PythonAnalyzer(LanguageAnalyzer):
         chunk: CodeChunk
     ) -> Iterator[ImportRelationship]:
         """Extract import statements from Python code."""
-        parser = Parser()
-        parser.set_language(self._language)
+        parser = create_parser(self._language)
 
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
@@ -266,8 +265,7 @@ class PythonAnalyzer(LanguageAnalyzer):
     ) -> Dict[str, Any]:
         """Extract Python-specific metadata."""
         metadata = {}
-        parser = Parser()
-        parser.set_language(self._language)
+        parser = create_parser(self._language)
 
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))

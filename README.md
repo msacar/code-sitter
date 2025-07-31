@@ -322,6 +322,15 @@ you should see:
 Server running at http://0.0.0.0:3000/cocoindex
 Open CocoInsight at: https://cocoindex.io/cocoinsight
 ```
+```bash
+# Set these environment variables
+export USE_POSTGRES=true
+export COCOINDEX_DATABASE_URL="postgresql://cocoindex:cocoindex@localhost:5432/cocoindex"
+export DATABASE_URL="$COCOINDEX_DATABASE_URL"
+
+# Verify they're set
+echo $COCOINDEX_DATABASE_URL
+```
 api: http://0.0.0.0:3000/cocoindex
 ui: https://cocoindex.io/cocoinsight
 **the cocoinsight should be pointed to the api endpoint**
