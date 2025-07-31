@@ -31,7 +31,7 @@ class SmartChunker:
         - Type definitions
         """
         ext = Path(file_path).suffix
-        analyzer = get_analyzer(ext)
+        analyzer = get_analyzer(file_path)  # Pass full file path, not just extension
 
         if not analyzer:
             logger.warning(f"No analyzer for {ext}, falling back to basic chunking")
@@ -88,14 +88,13 @@ class SmartChunker:
         """Use analyzer to extract file structure."""
         # Create a single chunk representing the whole file for analysis
         whole_file_chunk = AnalyzerCodeChunk(
-            content=content,
+            text=content,
+            filename=file_path,
             start_line=1,
             end_line=len(content.split('\n')),
-            file_path=file_path,
-            chunk_index=0,
-            total_chunks=1,
-            language=analyzer.language_name,
-            node_type="file"
+            node_type="file",
+            symbols=[],  # Will be populated by analysis
+            metadata={"language": analyzer.language_name}
         )
 
         # Extract information using analyzer

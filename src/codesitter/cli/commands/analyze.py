@@ -13,18 +13,28 @@ from ...analyzers.base import CodeChunk
 
 console = Console()
 
+# Initialize analyzer registry once at module load
+_initialized = False
+
+def _ensure_initialized():
+    """Ensure analyzers are initialized only once."""
+    global _initialized
+    if not _initialized:
+        register_defaults()
+        auto_discover_analyzers()
+        _initialized = True
+
 
 @click.group()
 def analyze():
     """Run analyzers standalone without indexing."""
-    # Initialize analyzer registry
-    register_defaults()
-    auto_discover_analyzers()
+    _ensure_initialized()
 
 
 @analyze.command()
 def list():
     """List all available analyzers and their capabilities."""
+    _ensure_initialized()
     registry = get_registry()
 
     table = Table(title="Available Analyzers")
@@ -32,11 +42,27 @@ def list():
     table.add_column("Extensions", style="green")
     table.add_column("Capabilities", style="yellow")
 
-    supported = registry.list_supported_extensions()
+    # Get analyzers by class name
+    analyzer_info = {}
 
-    for analyzer_class, extensions in supported.items():
-        # Get an instance to check capabilities
-        analyzer = get_analyzer(extensions[0])
+    # Group by analyzer class
+    for ext, language in registry.list_supported_extensions().items():
+        # Create a dummy filename for this extension
+        dummy_file = f"dummy{ext}"
+        analyzer = get_analyzer(dummy_file)
+
+        if analyzer:
+            class_name = analyzer.__class__.__name__
+            if class_name not in analyzer_info:
+                analyzer_info[class_name] = {
+                    "extensions": [],
+                    "analyzer": analyzer
+                }
+            analyzer_info[class_name]["extensions"].append(ext)
+
+    # Display grouped by analyzer
+    for class_name, info in analyzer_info.items():
+        analyzer = info["analyzer"]
         capabilities = []
 
         if hasattr(analyzer, 'extract_call_relationships'):
@@ -47,8 +73,8 @@ def list():
             capabilities.append("metadata")
 
         table.add_row(
-            analyzer_class,
-            ", ".join(extensions),
+            class_name,
+            ", ".join(sorted(info["extensions"])),
             ", ".join(capabilities) or "basic only"
         )
 
@@ -62,13 +88,14 @@ def list():
 @click.option('--imports-only', is_flag=True, help='Show only imports')
 def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool):
     """Analyze a single file."""
+    _ensure_initialized()
     path = Path(file_path)
 
     with open(path, 'r') as f:
         content = f.read()
 
     ext = path.suffix
-    analyzer = get_analyzer(ext)
+    analyzer = get_analyzer(str(path))  # Pass full filename, not just extension
 
     if not analyzer:
         console.print(f"[red]No analyzer found for {ext} files[/red]")
@@ -76,14 +103,13 @@ def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool
 
     # Create chunk for whole file
     chunk = CodeChunk(
-        content=content,
+        text=content,
+        filename=str(path),
         start_line=1,
         end_line=len(content.split('\n')),
-        file_path=str(path),
-        chunk_index=0,
-        total_chunks=1,
-        language=analyzer.language_name,
-        node_type="file"
+        node_type="file",
+        symbols=[],  # Empty list for now
+        metadata={}
     )
 
     # Extract data
@@ -148,13 +174,14 @@ def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool
 @click.option('--json', 'output_json', is_flag=True, help='Output as JSON')
 def directory(directory: str, ext: str, output_json: bool):
     """Analyze all files in a directory."""
+    _ensure_initialized()
     path = Path(directory)
     registry = get_registry()
 
     # Get supported extensions
     supported_exts = set()
-    for exts in registry.list_supported_extensions().values():
-        supported_exts.update(exts)
+    for exts in registry.list_supported_extensions().keys():
+        supported_exts.add(exts)
 
     # Find files
     if ext:
@@ -186,19 +213,18 @@ def directory(directory: str, ext: str, output_json: bool):
                 with open(file_path, 'r') as f:
                     content = f.read()
 
-                analyzer = get_analyzer(file_path.suffix)
+                analyzer = get_analyzer(str(file_path))
                 if not analyzer:
                     continue
 
                 chunk = CodeChunk(
-                    content=content,
+                    text=content,
+                    filename=str(file_path),
                     start_line=1,
                     end_line=len(content.split('\n')),
-                    file_path=str(file_path),
-                    chunk_index=0,
-                    total_chunks=1,
-                    language=analyzer.language_name,
-                    node_type="file"
+                    node_type="file",
+                    symbols=[],  # Empty list for now
+                    metadata={}
                 )
 
                 # Count items

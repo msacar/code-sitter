@@ -7,7 +7,7 @@ Manages registration and lookup of language-specific analyzers.
 import os
 import importlib
 import logging
-from typing import Dict, Optional, Type
+from typing import Dict, Optional, Type, List
 from pathlib import Path
 
 from .base import LanguageAnalyzer, DefaultAnalyzer
@@ -32,7 +32,9 @@ class AnalyzerRegistry:
         language = analyzer.language_name
 
         if language in self._analyzers:
-            logger.warning(f"Overwriting existing analyzer for {language}")
+            # Only warn if it's not the same analyzer class
+            if type(self._analyzers[language]) != type(analyzer):
+                logger.debug(f"Replacing {type(self._analyzers[language]).__name__} with {type(analyzer).__name__} for {language}")
 
         self._analyzers[language] = analyzer
 
@@ -66,6 +68,16 @@ class AnalyzerRegistry:
         """Return mapping of extensions to languages."""
         return self._extension_map.copy()
 
+    def list_analyzers(self) -> Dict[str, List[str]]:
+        """Return mapping of analyzer class names to their supported extensions."""
+        result = {}
+        for analyzer in self._analyzers.values():
+            class_name = analyzer.__class__.__name__
+            if class_name not in result:
+                result[class_name] = []
+            result[class_name].extend(analyzer.supported_extensions)
+        return result
+
     def auto_discover(self, path: str = None) -> None:
         """
         Auto-discover and load analyzer plugins.
@@ -84,29 +96,25 @@ class AnalyzerRegistry:
             return
 
         # Find all Python files in the languages directory
-        for file_path in path.glob("*.py"):
-            if file_path.name.startswith("_"):
+        for py_file in path.glob("*.py"):
+            if py_file.name.startswith("__"):
                 continue
 
-            module_name = file_path.stem
+            module_name = f"codesitter.analyzers.languages.{py_file.stem}"
 
             try:
-                # Import the module
-                module = importlib.import_module(f".languages.{module_name}", package="codesitter.analyzers")
+                module = importlib.import_module(module_name)
 
-                # Look for analyzer classes
+                # Find all LanguageAnalyzer subclasses in the module
                 for attr_name in dir(module):
                     attr = getattr(module, attr_name)
-
-                    # Check if it's a class that inherits from LanguageAnalyzer
                     if (isinstance(attr, type) and
                         issubclass(attr, LanguageAnalyzer) and
-                        attr is not LanguageAnalyzer and
-                        attr is not DefaultAnalyzer):
-
-                        # Instantiate and register
-                        analyzer = attr()
-                        self.register(analyzer)
+                        attr is not LanguageAnalyzer):
+                        # Create an instance and register it
+                        analyzer_instance = attr()
+                        self.register(analyzer_instance)
+                        logger.debug(f"Registered {attr_name} from {module_name}")
 
             except Exception as e:
                 logger.error(f"Failed to load analyzer from {module_name}: {e}")
@@ -143,14 +151,15 @@ def get_registry() -> AnalyzerRegistry:
 # Register default analyzers for common languages
 def register_defaults():
     """Register default analyzers for languages without custom implementations."""
+    # Languages that likely have custom analyzers - skip these in defaults
+    skip_languages = {
+        "typescript", "javascript", "python", "java"
+    }
+
     defaults = [
         # Web languages
         DefaultAnalyzer([".html", ".htm"], "html"),
         DefaultAnalyzer([".css", ".scss", ".sass"], "css"),
-
-        # JavaScript/TypeScript (fallback if custom analyzer fails)
-        DefaultAnalyzer([".js", ".jsx", ".mjs", ".cjs"], "javascript"),
-        DefaultAnalyzer([".ts", ".tsx"], "typescript"),
 
         # Config languages
         DefaultAnalyzer([".json"], "json"),
@@ -169,8 +178,11 @@ def register_defaults():
         DefaultAnalyzer([".rb"], "ruby"),
         DefaultAnalyzer([".php"], "php"),
         DefaultAnalyzer([".swift"], "swift"),
-        DefaultAnalyzer([".kt"], "kotlin"),
+        DefaultAnalyzer([".kt", ".kts"], "kotlin"),
+        DefaultAnalyzer([".scala"], "scala"),
     ]
 
     for analyzer in defaults:
-        register_analyzer(analyzer)
+        # Skip if this language likely has a custom analyzer
+        if analyzer.language_name not in skip_languages:
+            register_analyzer(analyzer)
