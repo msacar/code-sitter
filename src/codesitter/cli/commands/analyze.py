@@ -141,7 +141,7 @@ def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool
         if not calls_only:
             result["imports"] = [
                 {
-                    "source": imp.source,
+                    "source": imp.imported_from,
                     "items": imp.imported_items,
                     "type": imp.import_type,
                     "line": imp.line
