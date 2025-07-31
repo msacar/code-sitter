@@ -34,6 +34,8 @@ MINIMAL_FLOW_PATH = FLOW_DIR / "minimal.py"
 ANALYZER_AWARE_FLOW_PATH = FLOW_DIR / "analyzer_aware.py"
 ANALYZER_ADVANCED_FLOW_PATH = FLOW_DIR / "analyzer_advanced.py"
 ANALYZER_SIMPLE_FLOW_PATH = FLOW_DIR / "analyzer_simple.py"
+ANALYZER_DETAILED_FLOW_PATH = FLOW_DIR / "analyzer_detailed.py"
+SMART_CHUNKING_FLOW_PATH = FLOW_DIR / "smart_chunking.py"
 
 # Display settings
 MAX_CODE_PREVIEW_LENGTH = 400

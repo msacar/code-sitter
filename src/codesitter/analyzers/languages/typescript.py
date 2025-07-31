@@ -7,6 +7,7 @@ from tree_sitter import Language, Parser, Query
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
+from ..parser_utils import create_parser
 
 logger = logging.getLogger(__name__)
 
@@ -111,8 +112,8 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
         ext = os.path.splitext(filename)[1].lower()
         language = self._language_map.get(ext, self._ts_language)
 
-        parser = Parser()
-        parser.set_language(language)
+        # Use utility function that handles different tree-sitter API versions
+        parser = create_parser(language)
 
         return parser, language
 
