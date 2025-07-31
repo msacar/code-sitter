@@ -40,8 +40,6 @@ class AnalyzerRegistry:
         for ext in analyzer.supported_extensions:
             self._extension_map[ext] = language
 
-        logger.info(f"Registered {language} analyzer for extensions: {analyzer.supported_extensions}")
-
     def get_analyzer_for_file(self, filename: str) -> Optional[LanguageAnalyzer]:
         """
         Get the appropriate analyzer for a file.
