@@ -8,5 +8,6 @@ You are working on codesitter. Before making any changes:
 
 
 [commands]
-analyze = ["codesitter", "analyze","file", "test_calls.ts", "--json"]
+run = ["codesitter"]  # This allows you to pass any arguments dynamically
+custom = ["codesitter"]  # This allows you to pass any arguments dynamically
 
