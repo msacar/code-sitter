@@ -59,7 +59,29 @@
             "default": null
           }
         ],
-        "filename": "test_calls.ts"
+        "filename": "test_calls.ts",
+        "calls": [
+          {
+            "caller": "sayHello",
+            "callee": "getUser",
+            "arguments": [
+              "id"
+            ],
+            "line": 7
+          },
+          {
+            "caller": "sayHello",
+            "callee": "toString",
+            "arguments": [],
+            "line": 9
+          },
+          {
+            "caller": "sayHello",
+            "callee": "toLowerCase",
+            "arguments": [],
+            "line": 8
+          }
+        ]
       },
       "children": [
         {
