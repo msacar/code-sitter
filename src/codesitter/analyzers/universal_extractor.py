@@ -37,7 +37,7 @@ class UniversalExtractor(ABC):
         'variable': [
             'variable_declaration',
             'variable_declarator',
-            'lexical_declaration',
+            # Don't include lexical_declaration - it's a container, not the actual variable
             'const_item',  # Rust
             'let_declaration',  # Rust
         ],
@@ -58,10 +58,9 @@ class UniversalExtractor(ABC):
             'use_declaration',  # Rust
             'import_spec',  # Go
         ],
-        'export': [
-            'export_statement',
-            'export_declaration',
-        ]
+        # Note: export_statement is a wrapper/container, not an element itself
+        # The actual exported elements (class, function, etc.) are detected
+        # and marked as exported via metadata
     }
 
     def __init__(self, language):
@@ -189,6 +188,9 @@ class TypeScriptExtractor(UniversalExtractor):
     TS_PATTERNS = {
         'type': [
             'type_alias_declaration',
+            # interface_declaration should be 'interface', not 'type'
+        ],
+        'interface': [
             'interface_declaration',
         ],
         'enum': ['enum_declaration'],
