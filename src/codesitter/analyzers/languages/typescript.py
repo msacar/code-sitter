@@ -326,16 +326,24 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
 
             # Extract all structural elements
             for element in extractor.extract_all(tree):
-                # Adjust line numbers based on chunk offset
-                element.start_line += chunk.start_line - 1
-                element.end_line += chunk.start_line - 1
-
-                # Add filename to metadata
-                element.metadata["filename"] = chunk.filename
-
+                # Adjust line numbers and add filename recursively
+                self._update_element_recursively(element, chunk.start_line - 1, chunk.filename)
                 yield element
 
         except Exception as e:
             logger.error(f"Error extracting structure from {chunk.filename}: {e}")
             # Return empty iterator on error
             return iter([])
+
+    def _update_element_recursively(self, element: ExtractedElement, line_offset: int, filename: str):
+        """Recursively update element and all its children with line offset and filename."""
+        # Update line numbers
+        element.start_line += line_offset
+        element.end_line += line_offset
+
+        # Add filename to metadata
+        element.metadata["filename"] = filename
+
+        # Process all children recursively
+        for child in element.children:
+            self._update_element_recursively(child, line_offset, filename)

@@ -73,25 +73,31 @@ class UniversalExtractor(ABC):
 
     def extract_all(self, tree) -> Iterator[ExtractedElement]:
         """Extract all structural elements from the tree."""
-        yield from self._extract_from_node(tree.root_node)
+        yield from self._extract_from_node(tree.root_node, parent_qualified_name="")
 
-    def _extract_from_node(self, node, depth=0) -> Iterator[ExtractedElement]:
+    def _extract_from_node(self, node, parent_qualified_name="", depth=0) -> Iterator[ExtractedElement]:
         """Recursively extract elements from a node."""
         # Check if this node matches any pattern
         element = None
         if node.is_named and node.type in self._node_type_to_element:
             element = self._create_element(node)
             if element:
+                # Build qualified name
+                if parent_qualified_name:
+                    element.qualified_name = f"{parent_qualified_name}.{element.name}"
+                else:
+                    element.qualified_name = element.name
+
                 # Extract children before yielding parent
                 for child in node.named_children:
-                    child_elements = list(self._extract_from_node(child, depth + 1))
+                    child_elements = list(self._extract_from_node(child, element.qualified_name, depth + 1))
                     element.children.extend(child_elements)
                 yield element
                 return  # Don't recurse further into this node's children
 
         # Continue recursion for non-matching nodes
         for child in node.named_children:
-            yield from self._extract_from_node(child, depth + 1)
+            yield from self._extract_from_node(child, parent_qualified_name, depth + 1)
 
     def _create_element(self, node) -> Optional[ExtractedElement]:
         """Create an ExtractedElement from a node."""
@@ -134,16 +140,17 @@ class UniversalExtractor(ABC):
             name_node = self._get_field(node, field_name)
             if name_node:
                 # Handle nested identifiers
-                if name_node.type == 'identifier':
+                if name_node.type in ['identifier', 'type_identifier', 'property_identifier']:
                     return name_node.text.decode('utf-8')
                 # Recurse to find identifier
-                ident = self._find_child_by_type(name_node, 'identifier')
-                if ident:
-                    return ident.text.decode('utf-8')
+                for id_type in ['identifier', 'type_identifier', 'property_identifier']:
+                    ident = self._find_child_by_type(name_node, id_type)
+                    if ident:
+                        return ident.text.decode('utf-8')
 
         # Try to find any identifier child
         for child in node.named_children:
-            if child.type == 'identifier':
+            if child.type in ['identifier', 'type_identifier', 'property_identifier']:
                 return child.text.decode('utf-8')
 
         return None
@@ -214,6 +221,10 @@ class TypeScriptExtractor(UniversalExtractor):
             self._enrich_interface(element, node)
         elif element.element_type == 'variable':
             self._enrich_variable(element, node)
+        elif element.element_type == 'type':
+            self._enrich_type(element, node)
+        elif element.element_type == 'enum':
+            self._enrich_enum(element, node)
 
     def _enrich_function(self, element: ExtractedElement, node):
         """Extract detailed function information."""
@@ -221,6 +232,20 @@ class TypeScriptExtractor(UniversalExtractor):
 
         # Check if async
         metadata['async'] = element.text.strip().startswith('async ')
+
+        # Check visibility for methods
+        if node.type == 'method_definition':
+            # Default visibility is public in TypeScript
+            metadata['visibility'] = 'public'
+
+            # Check for accessibility modifier as a child of method
+            for child in node.children:
+                if child.type == 'accessibility_modifier':
+                    metadata['visibility'] = child.text.decode('utf-8')
+                    break
+
+            # Check if static method
+            metadata['static'] = 'static' in element.text[:20]
 
         # Extract parameters
         params = []
@@ -267,10 +292,13 @@ class TypeScriptExtractor(UniversalExtractor):
             if value and value.type == 'arrow_function':
                 metadata['arrow_function'] = True
 
-        # Check if exported
+        # Check if exported (check parent and grandparent)
         parent = node.parent
-        if parent and parent.type == 'export_statement':
-            metadata['exported'] = True
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True
 
     def _enrich_class(self, element: ExtractedElement, node):
         """Extract detailed class information."""
@@ -299,10 +327,13 @@ class TypeScriptExtractor(UniversalExtractor):
         if decorators:
             metadata['decorators'] = decorators
 
-        # Check if exported
+        # Check if exported (check parent and grandparent)
         parent = node.parent
-        if parent and parent.type == 'export_statement':
-            metadata['exported'] = True
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True
 
     def _enrich_interface(self, element: ExtractedElement, node):
         """Extract interface details."""
@@ -323,10 +354,13 @@ class TypeScriptExtractor(UniversalExtractor):
         if type_params:
             metadata['generics'] = type_params.text.decode('utf-8')
 
-        # Check if exported
+        # Check if exported (check parent and grandparent)
         parent = node.parent
-        if parent and parent.type == 'export_statement':
-            metadata['exported'] = True
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True
 
     def _enrich_variable(self, element: ExtractedElement, node):
         """Extract variable details."""
@@ -353,3 +387,35 @@ class TypeScriptExtractor(UniversalExtractor):
             if value.type in ['arrow_function', 'function_expression']:
                 element.element_type = 'function'
                 self._enrich_function(element, node)
+
+        # Check if exported (check parent and grandparent)
+        parent = node.parent
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True
+
+    def _enrich_type(self, element: ExtractedElement, node):
+        """Extract type alias details."""
+        metadata = element.metadata
+
+        # Check if exported (check parent and grandparent)
+        parent = node.parent
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True
+
+    def _enrich_enum(self, element: ExtractedElement, node):
+        """Extract enum details."""
+        metadata = element.metadata
+
+        # Check if exported (check parent and grandparent)
+        parent = node.parent
+        if parent:
+            if parent.type == 'export_statement':
+                metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                metadata['exported'] = True

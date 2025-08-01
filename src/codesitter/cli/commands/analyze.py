@@ -162,19 +162,7 @@ def file(file_path: str, output_json: bool):
 
     try:
         result["structure"] = [
-            {
-                "type": elem.element_type,
-                "name": elem.name,
-                "lines": f"{elem.start_line}-{elem.end_line}",
-                "node_type": elem.node_type,
-                "metadata": elem.metadata,
-                "first_line": lines[elem.start_line - 1].strip() if 1 <= elem.start_line <= len(lines) else "",
-                "text": elem.text,  # Full text of the element
-                "children": [
-                    {"type": child.element_type, "name": child.name}
-                    for child in elem.children
-                ]
-            }
+            _element_to_dict(elem, lines)
             for elem in analyzer.extract_structure(chunk)
         ]
     except Exception as e:
@@ -187,6 +175,23 @@ def file(file_path: str, output_json: bool):
         console.print(json.dumps(result, indent=2))
     else:
         _pretty_print_analysis(result)
+
+
+def _element_to_dict(elem, lines):
+    """Convert an ExtractedElement to a dictionary with full metadata."""
+    return {
+        "type": elem.element_type,
+        "name": elem.name,
+        "qualified_name": elem.qualified_name,
+        "lines": f"{elem.start_line}-{elem.end_line}",
+        "node_type": elem.node_type,
+        "metadata": elem.metadata,
+        "first_line": lines[elem.start_line - 1].strip() if 1 <= elem.start_line <= len(lines) else "",
+        "text": elem.text,
+        "children": [
+            _element_to_dict(child, lines) for child in elem.children
+        ]
+    }
 
 
 @analyze.command()
@@ -360,7 +365,7 @@ def _pretty_print_analysis(result: Dict[str, Any]):
             if elem.get('children'):
                 console.print(f"     Children: {len(elem['children'])} elements")
                 for child in elem['children'][:3]:  # Show first 3
-                    console.print(f"       - {child['type']}: {child['name']}")
+                    console.print(f"       - {child['type']}: {child['name']} [{child['qualified_name']}]")
                 if len(elem['children']) > 3:
                     console.print(f"       ... and {len(elem['children']) - 3} more")
 

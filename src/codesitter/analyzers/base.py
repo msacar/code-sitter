@@ -58,6 +58,7 @@ class ExtractedElement:
     fields: Dict[str, Any] = field(default_factory=dict)  # Raw fields from tree-sitter
     metadata: Dict[str, Any] = field(default_factory=dict)  # Enriched metadata
     children: List['ExtractedElement'] = field(default_factory=list)  # Nested elements
+    qualified_name: str = ""  # Full qualified name like "ClassName.methodName"
 
 
 class LanguageAnalyzer(ABC):
