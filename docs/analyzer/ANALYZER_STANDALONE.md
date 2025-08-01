@@ -18,10 +18,6 @@ codesitter analyze file src/auth.ts --json
 
 # Analyze entire directories
 codesitter analyze directory ./src --ext .ts
-
-# Extract specific information
-codesitter analyze file src/auth.ts --calls-only    # Just function calls
-codesitter analyze file src/auth.ts --imports-only  # Just imports
 ```
 
 ## Key Features
@@ -33,8 +29,7 @@ codesitter analyze file src/auth.ts --imports-only  # Just imports
 
 2. **Multiple Output Formats**
    - Pretty-printed for humans
-   - JSON for scripting
-   - Filtered views (calls/imports only)
+   - JSON for scripting and automation
 
 3. **Batch Processing**
    - Analyze entire directories
@@ -55,7 +50,7 @@ codesitter analyze directory ./src --ext .tsx --json | jq '.files[] | select(.me
 
 ### Check Dependencies
 ```bash
-codesitter analyze file src/index.ts --imports-only
+codesitter analyze file src/index.ts --json | jq '.imports'
 ```
 
 ### CI/CD Integration

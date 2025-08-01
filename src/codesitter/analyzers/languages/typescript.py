@@ -6,8 +6,9 @@ import logging
 from tree_sitter import Language, Parser, Query, QueryCursor
 from tree_sitter_language_pack import get_language
 
-from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
+from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship, ExtractedElement
 from ..parser_utils import create_parser, query_captures
+from ..universal_extractor import TypeScriptExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,9 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
             ".js": self._js_language,
             ".jsx": self._jsx_language,
         }
+
+        # Initialize the universal extractor for structure extraction
+        self._ts_extractor = TypeScriptExtractor(self._ts_language)
 
         # Define queries
         self._call_query = """
@@ -297,3 +301,41 @@ class TypeScriptAnalyzer(LanguageAnalyzer):
             metadata["is_test_file"] = True
 
         return metadata
+
+    def extract_structure(
+        self,
+        chunk: CodeChunk
+    ) -> Iterator[ExtractedElement]:
+        """Extract structural elements using the TypeScript extractor."""
+        parser, language = self._get_parser_and_language(chunk.filename)
+
+        try:
+            # Parse the code
+            tree = parser.parse(bytes(chunk.text, "utf8"))
+
+            # Use the appropriate extractor based on file extension
+            import os
+            ext = os.path.splitext(chunk.filename)[1].lower()
+
+            # Create the appropriate extractor for this file type
+            if ext in self._language_map:
+                extractor = TypeScriptExtractor(self._language_map[ext])
+            else:
+                # Default to TypeScript
+                extractor = self._ts_extractor
+
+            # Extract all structural elements
+            for element in extractor.extract_all(tree):
+                # Adjust line numbers based on chunk offset
+                element.start_line += chunk.start_line - 1
+                element.end_line += chunk.start_line - 1
+
+                # Add filename to metadata
+                element.metadata["filename"] = chunk.filename
+
+                yield element
+
+        except Exception as e:
+            logger.error(f"Error extracting structure from {chunk.filename}: {e}")
+            # Return empty iterator on error
+            return iter([])

@@ -7,7 +7,7 @@ into the code indexing system.
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Iterator, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -19,7 +19,7 @@ class CodeChunk:
     end_line: int
     node_type: str
     symbols: List[str]
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -42,6 +42,22 @@ class ImportRelationship:
     imported_items: List[str]
     import_type: str  # 'default', 'named', 'namespace', etc.
     line: int
+
+
+@dataclass
+class ExtractedElement:
+    """Represents an extracted code element (function, class, etc.)"""
+    element_type: str  # 'function', 'class', 'interface', etc.
+    name: str
+    node_type: str  # The tree-sitter node type
+    start_line: int
+    end_line: int
+    start_byte: int
+    end_byte: int
+    text: str
+    fields: Dict[str, Any] = field(default_factory=dict)  # Raw fields from tree-sitter
+    metadata: Dict[str, Any] = field(default_factory=dict)  # Enriched metadata
+    children: List['ExtractedElement'] = field(default_factory=list)  # Nested elements
 
 
 class LanguageAnalyzer(ABC):
@@ -103,6 +119,24 @@ class LanguageAnalyzer(ABC):
         Languages can override to add custom analysis.
         """
         return {}
+
+    def extract_structure(
+        self,
+        chunk: CodeChunk
+    ) -> Iterator[ExtractedElement]:
+        """
+        Extract structural elements (functions, classes, interfaces, etc.) from a code chunk.
+
+        Default implementation returns empty iterator.
+        Languages can override to provide structure extraction.
+
+        Args:
+            chunk: Code chunk to analyze
+
+        Yields:
+            ExtractedElement objects representing code structure
+        """
+        return iter([])
 
     def should_analyze_chunk(self, chunk: CodeChunk) -> bool:
         """

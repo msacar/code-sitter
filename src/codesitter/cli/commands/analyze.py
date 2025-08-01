@@ -84,9 +84,7 @@ def list():
 @analyze.command()
 @click.argument('file_path', type=click.Path(exists=True))
 @click.option('--json', 'output_json', is_flag=True, help='Output as JSON')
-@click.option('--calls-only', is_flag=True, help='Show only function calls')
-@click.option('--imports-only', is_flag=True, help='Show only imports')
-def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool):
+def file(file_path: str, output_json: bool):
     """Analyze a single file."""
     _ensure_initialized()
     path = Path(file_path)
@@ -108,8 +106,7 @@ def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool
         start_line=1,
         end_line=len(content.split('\n')),
         node_type="file",
-        symbols=[],  # Empty list for now
-        metadata={}
+        symbols=[]  # Empty list for now
     )
 
     # Extract data
@@ -119,53 +116,71 @@ def file(file_path: str, output_json: bool, calls_only: bool, imports_only: bool
         "analyzer": analyzer.__class__.__name__,
         "calls": [],
         "imports": [],
-        "metadata": {}
+        "metadata": {},
+        "structure": []
     }
 
     try:
-        if not imports_only:
-            result["calls"] = [
-                {
-                    "caller": call.caller,
-                    "callee": call.callee,
-                    "arguments": call.arguments,
-                    "line": call.line
-                }
-                for call in analyzer.extract_call_relationships(chunk)
-            ]
+        result["calls"] = [
+            {
+                "caller": call.caller,
+                "callee": call.callee,
+                "arguments": call.arguments,
+                "line": call.line
+            }
+            for call in analyzer.extract_call_relationships(chunk)
+        ]
     except Exception as e:
         if output_json:
             result["errors"] = {"calls": str(e)}
 
     try:
-        if not calls_only:
-            result["imports"] = [
-                {
-                    "source": imp.imported_from,
-                    "items": imp.imported_items,
-                    "type": imp.import_type,
-                    "line": imp.line
-                }
-                for imp in analyzer.extract_import_relationships(chunk)
-            ]
+        result["imports"] = [
+            {
+                "source": imp.imported_from,
+                "items": imp.imported_items,
+                "type": imp.import_type,
+                "line": imp.line
+            }
+            for imp in analyzer.extract_import_relationships(chunk)
+        ]
     except Exception as e:
         if output_json:
             result["errors"] = result.get("errors", {})
             result["errors"]["imports"] = str(e)
 
     try:
-        if not calls_only and not imports_only:
-            result["metadata"] = analyzer.extract_custom_metadata(chunk)
+        result["metadata"] = analyzer.extract_custom_metadata(chunk)
     except Exception as e:
         if output_json:
             result["errors"] = result.get("errors", {})
             result["errors"]["metadata"] = str(e)
 
+    try:
+        result["structure"] = [
+            {
+                "type": elem.element_type,
+                "name": elem.name,
+                "lines": f"{elem.start_line}-{elem.end_line}",
+                "node_type": elem.node_type,
+                "metadata": elem.metadata,
+                "children": [
+                    {"type": child.element_type, "name": child.name}
+                    for child in elem.children
+                ]
+            }
+            for elem in analyzer.extract_structure(chunk)
+        ]
+    except Exception as e:
+        if output_json:
+            result["errors"] = result.get("errors", {})
+            result["errors"]["structure"] = str(e)
+
     # Output results
     if output_json:
         console.print(json.dumps(result, indent=2))
     else:
-        _pretty_print_analysis(result, calls_only, imports_only)
+        _pretty_print_analysis(result)
 
 
 @analyze.command()
@@ -223,8 +238,7 @@ def directory(directory: str, ext: str, output_json: bool):
                     start_line=1,
                     end_line=len(content.split('\n')),
                     node_type="file",
-                    symbols=[],  # Empty list for now
-                    metadata={}
+                    symbols=[]  # Empty list for now
                 )
 
                 # Count items
@@ -257,19 +271,19 @@ def directory(directory: str, ext: str, output_json: bool):
         _print_directory_stats(stats)
 
 
-def _pretty_print_analysis(result: Dict[str, Any], calls_only: bool, imports_only: bool):
+def _pretty_print_analysis(result: Dict[str, Any]):
     """Pretty print analysis results."""
     console.print(f"\n[bold blue]Analysis:[/bold blue] {result['file']}")
     console.print(f"Language: {result['language']} | Analyzer: {result['analyzer']}")
     console.print("=" * 80)
 
-    if not imports_only and result['imports']:
+    if result['imports']:
         console.print(f"\n[bold green]📦 Imports ({len(result['imports'])}):[/bold green]")
         for imp in result['imports']:
             items = ', '.join(imp['items']) if imp['items'] else '*'
             console.print(f"  {imp['source']} → {items} (line {imp['line']})")
 
-    if not calls_only and result['calls']:
+    if result['calls']:
         console.print(f"\n[bold yellow]📞 Function Calls ({len(result['calls'])}):[/bold yellow]")
         for call in result['calls'][:10]:
             caller = call['caller'] or '<module>'
@@ -278,7 +292,7 @@ def _pretty_print_analysis(result: Dict[str, Any], calls_only: bool, imports_onl
         if len(result['calls']) > 10:
             console.print(f"  [dim]... and {len(result['calls']) - 10} more[/dim]")
 
-    if not calls_only and not imports_only and result['metadata']:
+    if result['metadata']:
         console.print(f"\n[bold cyan]📊 Metadata:[/bold cyan]")
         for key, value in result['metadata'].items():
             if isinstance(value, bool):
@@ -287,6 +301,63 @@ def _pretty_print_analysis(result: Dict[str, Any], calls_only: bool, imports_onl
                 console.print(f"  {key}: {len(value)} items")
             else:
                 console.print(f"  {key}: {value}")
+
+    if result.get('structure'):
+        console.print(f"\n[bold magenta]🏗️  Structure ({len(result['structure'])} elements):[/bold magenta]")
+        for elem in result['structure']:
+            # Icon based on type
+            icon = {
+                'function': '🔧',
+                'class': '🏛️',
+                'interface': '📘',
+                'type': '📐',
+                'enum': '🎯',
+                'variable': '📦'
+            }.get(elem['type'], '📄')
+
+            console.print(f"  {icon} {elem['type'].capitalize()}: [bold]{elem['name']}[/bold] (lines {elem['lines']})")
+
+            # Display key metadata
+            metadata = elem.get('metadata', {})
+            details = []
+
+            if metadata.get('async'):
+                details.append('async')
+            if metadata.get('exported'):
+                details.append('exported')
+            if metadata.get('arrow_function'):
+                details.append('arrow function')
+            if metadata.get('abstract'):
+                details.append('abstract')
+
+            if details:
+                console.print(f"     {' | '.join(details)}")
+
+            # Show parameters for functions
+            if elem['type'] == 'function' and metadata.get('parameters'):
+                params = metadata['parameters']
+                param_strs = []
+                for p in params:
+                    param_str = p['name']
+                    if p.get('type'):
+                        param_str += f": {p['type']}"
+                    if p.get('optional'):
+                        param_str += '?'
+                    param_strs.append(param_str)
+                console.print(f"     Parameters: ({', '.join(param_strs)})")
+
+            # Show return type
+            if metadata.get('return_type'):
+                console.print(f"     Returns: {metadata['return_type']}")
+
+            # Show children count
+            if elem.get('children'):
+                console.print(f"     Children: {len(elem['children'])} elements")
+                for child in elem['children'][:3]:  # Show first 3
+                    console.print(f"       - {child['type']}: {child['name']}")
+                if len(elem['children']) > 3:
+                    console.print(f"       ... and {len(elem['children']) - 3} more")
+
 
 
 def _print_directory_stats(stats: Dict[str, Any]):
