@@ -100,11 +100,12 @@ def file(file_path: str, output_json: bool):
         return
 
     # Create chunk for whole file
+    lines = content.split('\n')
     chunk = CodeChunk(
         text=content,
         filename=str(path),
         start_line=1,
-        end_line=len(content.split('\n')),
+        end_line=len(lines),
         node_type="file",
         symbols=[]  # Empty list for now
     )
@@ -126,7 +127,9 @@ def file(file_path: str, output_json: bool):
                 "caller": call.caller,
                 "callee": call.callee,
                 "arguments": call.arguments,
-                "line": call.line
+                "line": call.line,
+                "line_content": lines[call.line - 1].strip() if 1 <= call.line <= len(lines) else "",
+                "context": call.context
             }
             for call in analyzer.extract_call_relationships(chunk)
         ]
@@ -140,7 +143,8 @@ def file(file_path: str, output_json: bool):
                 "source": imp.imported_from,
                 "items": imp.imported_items,
                 "type": imp.import_type,
-                "line": imp.line
+                "line": imp.line,
+                "line_content": lines[imp.line - 1].strip() if 1 <= imp.line <= len(lines) else ""
             }
             for imp in analyzer.extract_import_relationships(chunk)
         ]
@@ -164,6 +168,8 @@ def file(file_path: str, output_json: bool):
                 "lines": f"{elem.start_line}-{elem.end_line}",
                 "node_type": elem.node_type,
                 "metadata": elem.metadata,
+                "first_line": lines[elem.start_line - 1].strip() if 1 <= elem.start_line <= len(lines) else "",
+                "text": elem.text,  # Full text of the element
                 "children": [
                     {"type": child.element_type, "name": child.name}
                     for child in elem.children
