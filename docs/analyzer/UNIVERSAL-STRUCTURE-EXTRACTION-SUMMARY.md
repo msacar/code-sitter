@@ -1,159 +1,47 @@
-# Analyzer CLI - Integrated into codesitter
+Summary of Our Brainstorming
+The Core Insight
+Tree-sitter already parses and identifies all structural elements (functions, classes, methods, etc.), but the current analyzer only uses this data internally to determine "caller" context. We're missing out on exposing this rich structural information!
+Proposed Solution: Universal Structure Extraction
 
-The analyzer functionality is now integrated into the main `codesitter` CLI as the `analyze` command.
+Universal Patterns that work across languages:
 
-## Installation
+function_declaration, method_definition → Functions
+class_declaration, struct_item → Classes/Structs
+interface_declaration, trait_item → Interfaces
+These patterns are surprisingly consistent across tree-sitter grammars
 
-```bash
-# Make sure codesitter is installed
-uv pip install -e .
-```
 
-## Usage
+Language-Specific Enrichment:
 
-### List Available Analyzers
-```bash
-codesitter analyze list
-```
+TypeScript: Extract parameter types, return types, generics, async status
+Python: Extract type hints, decorators, docstrings
+Java: Extract annotations, access modifiers, throws clauses
+Each language adds its specific flavor on top of the universal structure
 
-Shows all registered analyzers and their capabilities (calls, imports, metadata).
 
-### Analyze a Single File
-```bash
-# Pretty output (default)
-codesitter analyze file src/auth.ts
-
-# JSON output for scripting
-codesitter analyze file src/auth.ts --json
-```
-
-### Analyze a Directory
-```bash
-# Analyze all supported files
-codesitter analyze directory ./src
-
-# Filter by extension
-codesitter analyze directory ./src --ext .ts
-
-# JSON output with statistics
-codesitter analyze directory ./src --json
-```
-
-## Example Output
-
-### Pretty Output
-```
-🔍 Analysis: src/auth.ts
-Language: typescript | Analyzer: TypeScriptAnalyzer
-================================================================================
-
-📦 Imports (3):
-  @middy/core → middy (line 1)
-  aws-lambda → APIGatewayProxyEvent, APIGatewayProxyResult (line 2)
-  ../utils/middy-wrapper → MiddyContext (line 3)
-
-📞 Function Calls (2):
-  authMiddleware → ApiError() at line 28
-  authMiddleware → ApiError() at line 38
-
-📊 Metadata:
-  has_functions: ✓
-  has_classes: ✓
-  has_interfaces: ✓
-  is_react_component: ✗
-```
-
-### JSON Output
-```json
-{
-  "file": "src/auth.ts",
-  "language": "typescript",
-  "analyzer": "TypeScriptAnalyzer",
-  "imports": [
-    {
-      "source": "@middy/core",
-      "items": ["middy"],
-      "type": "named",
-      "line": 1
-    }
-  ],
-  "calls": [
-    {
-      "caller": "authMiddleware",
-      "callee": "ApiError",
-      "arguments": ["500", "'Tenant configuration not loaded'"],
-      "line": 28
-    }
-  ],
-  "metadata": {
-    "has_functions": true,
-    "has_classes": true,
-    "is_react_component": false
-  }
+Rich Output for each element:
+json{
+  "type": "function",
+  "name": "getUser",
+  "async": true,
+  "parameters": [{"name": "id", "type": "number"}],
+  "return_type": "Promise<User>",
+  "exported": true
 }
-```
 
-## Scripting Examples
 
-### Find All React Components
-```bash
-for file in $(find src -name "*.tsx"); do
-  result=$(codesitter analyze file "$file" --json)
-  if echo "$result" | jq -e '.metadata.is_react_component' > /dev/null; then
-    echo "$file is a React component"
-  fi
-done
-```
+Benefits of This Approach
 
-### Extract All Imports
-```bash
-# Get all external dependencies
-codesitter analyze directory ./src --json | \
-  jq -r '.files[].imports[].source' | \
-  grep -v "^\." | \
-  sort | uniq
-```
+Multi-language by Default: Add a new language, get basic structure extraction for free
+Query-able Structure: Find all async functions, exported classes, methods with specific parameters
+Foundation for Advanced Features: Type checking, dependency graphs, refactoring tools
+Leverages Tree-sitter's Strengths: We're using what tree-sitter does best - parsing structure
 
-### CI/CD Integration
-```bash
-# Check for specific patterns
-if codesitter analyze file src/api.ts --json | grep -q "unsafe_call"; then
-  echo "Found unsafe API calls!"
-  exit 1
-fi
-```
+Next Steps to Consider
 
-### Generate Import Graph
-```bash
-# Create a simple import dependency list
-for file in src/**/*.ts; do
-  echo "=== $file ==="
-  codesitter analyze file "$file" --json | jq -r '.imports[] | "\(.source) -> \(.items | join(", "))"'
-  echo
-done > import_graph.txt
-```
+Should we add extract_structure() to the base LanguageAnalyzer interface?
+Or enrich the existing extract_custom_metadata() to return actual elements instead of just booleans?
+How to handle the output in the CLI - separate section for structure?
+Storage implications - how does this affect indexing and search?
 
-## Comparison with Indexing
-
-| Feature | `codesitter index` | `codesitter analyze` |
-|---------|-------------------|---------------------|
-| Purpose | Build searchable index | Direct code analysis |
-| Storage | Database/JSON files | No storage |
-| Chunking | Yes (smart chunks) | No (full files) |
-| Speed | Slower (indexing) | Fast (direct) |
-| Use Case | Search & retrieval | Quick analysis |
-
-## Benefits
-
-- **Integrated**: Part of the main CLI, no separate tool
-- **Fast**: Direct analysis without indexing overhead
-- **Flexible**: Multiple output formats and filters
-- **Scriptable**: JSON output for automation
-- **Complete**: Full file context preserved
-
-## Related Commands
-
-- `codesitter index` - Index codebase for search
-- `codesitter search` - Search indexed code
-- `codesitter stats` - View index statistics
-- `codesitter analyze` - Direct code analysis (this command)
+The universal extractor approach gives us maximum information with minimal language-specific code, making it perfect for a multi-language code intelligence system!

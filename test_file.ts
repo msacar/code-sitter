@@ -136,3 +136,24 @@ export async function updateInstance(
 
     return updatedInstance
 }
+
+class MyClass {
+  constructor(public name: string) {}
+  public sayHello() {
+    console.log(`Hello, ${this.name}!`)
+  }
+  public sayGoodbye() {
+    console.log(`Goodbye, ${this.name}!`)
+  }
+  private saySomething() {
+    console.log('Something')
+  }
+  protected saySomethingElse() {
+    console.log('Something else')
+  }
+  public saySomethingPrivate() {
+    console.log('Something private')
+  }
+  public saySomethingProtected() {}
+
+}
