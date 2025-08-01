@@ -4,7 +4,7 @@ from typing import Iterator, List, Dict, Any, Optional
 import logging
 import re
 
-from tree_sitter import Language, Parser, Query, Node
+from tree_sitter import Language, Parser, Query, Node, QueryCursor
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
@@ -190,7 +190,7 @@ class EnhancedTypeScriptAnalyzer(LanguageAnalyzer):
             source_bytes = bytes(chunk.text, "utf8")
             tree = parser.parse(source_bytes)
             query = Query(language, self._function_detail_query)
-            captures = query.captures(tree.root_node)
+            captures = query_captures(query, tree.root_node)
 
             current_function = None
 
@@ -252,7 +252,7 @@ class EnhancedTypeScriptAnalyzer(LanguageAnalyzer):
             source_bytes = bytes(chunk.text, "utf8")
             tree = parser.parse(source_bytes)
             query = Query(language, self._interface_query)
-            captures = query.captures(tree.root_node)
+            captures = query_captures(query, tree.root_node)
 
             for name, node in captures:
                 if name == "interface":

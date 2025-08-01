@@ -3,7 +3,7 @@
 from typing import Iterator, List, Dict, Any
 import logging
 
-from tree_sitter import Language, Parser, Query
+from tree_sitter import Language, Parser, Query, QueryCursor
 from tree_sitter_language_pack import get_language
 
 from ..base import LanguageAnalyzer, CodeChunk, CallRelationship, ImportRelationship
@@ -111,8 +111,8 @@ class PythonAnalyzer(LanguageAnalyzer):
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
             # Use language.query() instead of Query() constructor
-            query = self._language.query(self._call_query)
-            captures = query.captures(tree.root_node)
+            query = Query(self._language, self._call_query)
+            captures = query_captures(query, tree.root_node)
 
             # Find containing function/method for context
             func_query = self._language.query(self._function_query)
@@ -191,8 +191,8 @@ class PythonAnalyzer(LanguageAnalyzer):
         try:
             tree = parser.parse(bytes(chunk.text, "utf8"))
             # Use language.query() instead of Query() constructor
-            query = self._language.query(self._import_query)
-            captures = query.captures(tree.root_node)
+            query = Query(self._language, self._import_query)
+            captures = query_captures(query, tree.root_node)
 
             # Process imports
             current_import = None
