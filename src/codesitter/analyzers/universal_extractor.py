@@ -211,211 +211,22 @@ class TypeScriptExtractor(UniversalExtractor):
             for pattern in patterns:
                 self._node_type_to_element[pattern] = element_type
 
+    def _check_export_status(self, element: ExtractedElement, node):
+        """Check if the element is exported (the only thing that requires AST analysis)."""
+        parent = node.parent
+        if parent:
+            if parent.type == 'export_statement':
+                element.metadata['exported'] = True
+            elif parent.parent and parent.parent.type == 'export_statement':
+                element.metadata['exported'] = True
+
     def _enrich_element(self, element: ExtractedElement, node):
-        """Add TypeScript-specific metadata."""
-        if element.element_type == 'function':
-            self._enrich_function(element, node)
-        elif element.element_type == 'class':
-            self._enrich_class(element, node)
-        elif element.element_type == 'interface':
-            self._enrich_interface(element, node)
-        elif element.element_type == 'variable':
-            self._enrich_variable(element, node)
-        elif element.element_type == 'type':
-            self._enrich_type(element, node)
-        elif element.element_type == 'enum':
-            self._enrich_enum(element, node)
+        """Add TypeScript-specific metadata - simplified to only export status."""
+        # Only check export status - everything else can be extracted from text by LLMs
+        self._check_export_status(element, node)
 
-    def _enrich_function(self, element: ExtractedElement, node):
-        """Extract detailed function information."""
-        metadata = element.metadata
-
-        # Check if async
-        metadata['async'] = element.text.strip().startswith('async ')
-
-        # Check visibility for methods
-        if node.type == 'method_definition':
-            # Default visibility is public in TypeScript
-            metadata['visibility'] = 'public'
-
-            # Check for accessibility modifier as a child of method
-            for child in node.children:
-                if child.type == 'accessibility_modifier':
-                    metadata['visibility'] = child.text.decode('utf-8')
-                    break
-
-            # Check if static method
-            metadata['static'] = 'static' in element.text[:20]
-
-        # Extract parameters
-        params = []
-        params_node = self._get_field(node, 'parameters')
-        if params_node:
-            for param in params_node.named_children:
-                if param.type in ['required_parameter', 'optional_parameter']:
-                    param_info = {
-                        'name': self._extract_name(param) or '<unnamed>',
-                        'optional': param.type == 'optional_parameter',
-                        'type': None,
-                        'default': None
-                    }
-
-                    # Extract type
-                    type_node = self._get_field(param, 'type')
-                    if type_node:
-                        param_info['type'] = type_node.text.decode('utf-8')
-
-                    # Extract default value
-                    value_node = self._get_field(param, 'value')
-                    if value_node:
-                        param_info['default'] = value_node.text.decode('utf-8')
-
-                    params.append(param_info)
-
-        metadata['parameters'] = params
-
-        # Extract return type
-        return_type_node = self._get_field(node, 'return_type')
-        if return_type_node:
-            # Skip the ':' token
-            if return_type_node.named_child_count > 0:
-                metadata['return_type'] = return_type_node.named_children[0].text.decode('utf-8')
-
-        # Extract generics
-        type_params = self._get_field(node, 'type_parameters')
-        if type_params:
-            metadata['generics'] = type_params.text.decode('utf-8')
-
-        # Check if it's an arrow function
-        if node.type == 'variable_declarator':
+        # Special case: convert arrow functions to function type
+        if element.element_type == 'variable' and node.type == 'variable_declarator':
             value = self._get_field(node, 'value')
-            if value and value.type == 'arrow_function':
-                metadata['arrow_function'] = True
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True
-
-    def _enrich_class(self, element: ExtractedElement, node):
-        """Extract detailed class information."""
-        metadata = element.metadata
-
-        # Check if abstract
-        if 'abstract' in element.text[:50]:
-            metadata['abstract'] = True
-
-        # Extract extends
-        heritage = self._get_field(node, 'heritage')
-        if heritage:
-            extends = self._find_child_by_type(heritage, 'extends_clause')
-            if extends:
-                metadata['extends'] = extends.text.decode('utf-8').replace('extends', '').strip()
-
-            implements = self._find_child_by_type(heritage, 'implements_clause')
-            if implements:
-                metadata['implements'] = implements.text.decode('utf-8').replace('implements', '').strip()
-
-        # Extract decorators
-        decorators = []
-        for child in node.children:
-            if child.type == 'decorator':
-                decorators.append(child.text.decode('utf-8'))
-        if decorators:
-            metadata['decorators'] = decorators
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True
-
-    def _enrich_interface(self, element: ExtractedElement, node):
-        """Extract interface details."""
-        metadata = element.metadata
-
-        # Extract extends
-        extends_node = self._get_field(node, 'extends')
-        if extends_node:
-            # Extract interface names from extends_type_clause
-            extends_interfaces = []
-            for child in extends_node.named_children:
-                if child.type in ['type_identifier', 'generic_type']:
-                    extends_interfaces.append(child.text.decode('utf-8'))
-            metadata['extends'] = extends_interfaces
-
-        # Extract generics
-        type_params = self._get_field(node, 'type_parameters')
-        if type_params:
-            metadata['generics'] = type_params.text.decode('utf-8')
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True
-
-    def _enrich_variable(self, element: ExtractedElement, node):
-        """Extract variable details."""
-        metadata = element.metadata
-
-        # Check const/let/var
-        parent = node.parent
-        if parent and parent.type == 'lexical_declaration':
-            if parent.text.decode('utf-8').strip().startswith('const'):
-                metadata['kind'] = 'const'
-            elif parent.text.decode('utf-8').strip().startswith('let'):
-                metadata['kind'] = 'let'
-        elif parent and parent.type == 'variable_declaration':
-            metadata['kind'] = 'var'
-
-        # Extract type
-        type_node = self._get_field(node, 'type')
-        if type_node:
-            metadata['type'] = type_node.text.decode('utf-8')
-
-        # Check if it's a function
-        value = self._get_field(node, 'value')
-        if value:
-            if value.type in ['arrow_function', 'function_expression']:
+            if value and value.type in ['arrow_function', 'function_expression']:
                 element.element_type = 'function'
-                self._enrich_function(element, node)
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True
-
-    def _enrich_type(self, element: ExtractedElement, node):
-        """Extract type alias details."""
-        metadata = element.metadata
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True
-
-    def _enrich_enum(self, element: ExtractedElement, node):
-        """Extract enum details."""
-        metadata = element.metadata
-
-        # Check if exported (check parent and grandparent)
-        parent = node.parent
-        if parent:
-            if parent.type == 'export_statement':
-                metadata['exported'] = True
-            elif parent.parent and parent.parent.type == 'export_statement':
-                metadata['exported'] = True

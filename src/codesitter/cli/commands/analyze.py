@@ -328,38 +328,10 @@ def _pretty_print_analysis(result: Dict[str, Any]):
 
             console.print(f"  {icon} {elem['type'].capitalize()}: [bold]{elem['name']}[/bold] (lines {elem['lines']})")
 
-            # Display key metadata
+            # Display only exported status - everything else can be seen in the text
             metadata = elem.get('metadata', {})
-            details = []
-
-            if metadata.get('async'):
-                details.append('async')
             if metadata.get('exported'):
-                details.append('exported')
-            if metadata.get('arrow_function'):
-                details.append('arrow function')
-            if metadata.get('abstract'):
-                details.append('abstract')
-
-            if details:
-                console.print(f"     {' | '.join(details)}")
-
-            # Show parameters for functions
-            if elem['type'] == 'function' and metadata.get('parameters'):
-                params = metadata['parameters']
-                param_strs = []
-                for p in params:
-                    param_str = p['name']
-                    if p.get('type'):
-                        param_str += f": {p['type']}"
-                    if p.get('optional'):
-                        param_str += '?'
-                    param_strs.append(param_str)
-                console.print(f"     Parameters: ({', '.join(param_strs)})")
-
-            # Show return type
-            if metadata.get('return_type'):
-                console.print(f"     Returns: {metadata['return_type']}")
+                console.print(f"     exported")
 
             # Show children count
             if elem.get('children'):
