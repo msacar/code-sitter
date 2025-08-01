@@ -8,6 +8,5 @@ You are working on codesitter. Before making any changes:
 
 
 [commands]
-run = ["codesitter"]  # This allows you to pass any arguments dynamically
-custom = ["codesitter"]  # This allows you to pass any arguments dynamically
-
+run = [".venv/bin/codesitter"]  # This allows you to pass any arguments dynamically
+custom = [".venv/bin/codesitter"]  # This allows you to pass any arguments dynamically
